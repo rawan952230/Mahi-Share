@@ -5,55 +5,62 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MAHI SHARE — File Transfer</title>
 <style>
-:root{--navy:#101b3c;--blue:#2457d6;--yellow:#ffd447;--ink:#172033;--muted:#667085;--line:#e4e8f0}
-*{box-sizing:border-box}body{margin:0;background:#f3f6fc;color:var(--ink);font:16px/1.5 Arial,sans-serif}
-header{background:var(--navy);color:white;padding:20px 16px;border-bottom:5px solid var(--yellow)}
-.wrap{max-width:900px;margin:auto}header .brand{font-size:26px;font-weight:800;letter-spacing:.5px}header p{margin:4px 0 0;color:#dbe4ff}
-main{max-width:900px;margin:24px auto;padding:0 14px}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px;box-shadow:0 8px 26px #1d31500b}
-h2{margin:0 0 10px;font-size:20px}.sub{color:var(--muted);font-size:14px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-button,.btn{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:11px 16px;font-weight:700;cursor:pointer}
-button.secondary{background:#eaf0ff;color:#183a9e}button:disabled{opacity:.45;cursor:not-allowed}
-input[type=text]{border:1px solid #cbd3e2;border-radius:10px;padding:12px;min-width:0;flex:1;font-size:16px}
-input[type=file]{max-width:100%}.status{padding:12px 14px;border-radius:10px;background:#eef3ff;color:#203b82;font-size:14px;overflow-wrap:anywhere}
-#qr{margin:12px 0;min-height:10px}#qr img{max-width:190px;border:8px solid white}
-progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}footer{text-align:center;color:var(--muted);font-size:13px;padding:12px 16px 30px}
-.note{background:#fff8d9;border:1px solid #f4df83;padding:12px;border-radius:10px;font-size:13px}
-@media(max-width:560px){.card{padding:16px}.row button{flex:1}.brand{font-size:23px}}
+:root{--navy:#06365f;--blue:#087bd3;--yellow:#ffd447;--ink:#171717;--muted:#666;--line:#dedede;--bg:#fff}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font:15px/1.45 Arial,Helvetica,sans-serif}
+button,input{font:inherit}.page{max-width:780px;margin:20px auto 10px;padding:12px 12px 18px;border:1px solid #dedede;border-radius:17px;background:#fff}
+header{background:var(--navy);color:#fff;text-align:center;border-radius:12px;padding:17px 12px 18px;margin-bottom:12px}
+.brand-icon{font-size:23px;line-height:1.2;margin-bottom:8px}.brand{font-size:21px;font-weight:800;margin:0}.tagline{font-size:14px;margin:8px 0 11px;color:#f2f6fb}.devices{display:flex;justify-content:center;align-items:center;gap:12px;font-size:18px}.devices .arrows{color:var(--yellow);font-size:22px;font-weight:bold}
+main{margin:0;padding:0}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-card{min-height:108px;border:1px solid var(--line);border-radius:13px;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px 10px;cursor:pointer;color:var(--ink)}.action-card:hover{border-color:#9ebfe0;background:#fbfdff}.action-icon{font-size:20px;color:var(--blue);margin-bottom:7px;line-height:1}.action-title{font-size:15px;font-weight:700;margin-bottom:8px}.action-desc{font-size:14px;color:#666}.scan-section{text-align:center;padding:20px 8px 2px}.scan-icon{font-size:24px;line-height:1;margin-bottom:6px;color:#111}.scan-title{font-weight:700;font-size:15px;margin-bottom:6px}.scan-desc{font-size:14px;color:#666;margin-bottom:10px}
+button{border:0;border-radius:8px;background:var(--blue);color:white;padding:10px 14px;font-weight:700;cursor:pointer}button.secondary{background:#eef4fb;color:#174b7a}button:disabled{opacity:.45;cursor:not-allowed}input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-width:0;flex:1;font-size:15px;width:100%}input[type=file]{max-width:100%;width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;background:#fff}.details{display:none;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px}.details.open{display:block}.details h2{font-size:17px;margin:0 0 10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row button{flex:1}.sub{color:var(--muted);font-size:13px}.status{padding:10px 12px;border-radius:8px;background:#f0f5fb;color:#21466b;font-size:13px;overflow-wrap:anywhere;margin-top:10px}#qr{margin:10px 0;overflow-wrap:anywhere}#qr img,#qr canvas{max-width:100%;height:auto!important;border:6px solid white}#qr-reader{width:100%;overflow:hidden;border-radius:10px}#qr-reader video{width:100%;border-radius:10px}progress{width:100%;height:14px;margin-top:10px}#fileList{padding-left:20px}#fileList li{margin:8px 0;overflow-wrap:anywhere}.hint{font-size:12px;color:#666;margin:8px 0 0}footer{text-align:center;color:#777;font-size:12px;padding:15px 5px 2px}.privacy{font-size:12px;color:#666;margin-top:12px;padding:10px;border:1px solid #eee;border-radius:8px}
+@media(max-width:520px){.page{margin:8px 0;padding:6px;border-radius:12px;border-left:0;border-right:0}.actions{gap:7px}.action-card{min-height:108px;padding:12px 5px}.action-title{font-size:14px}.action-desc{font-size:13px}.brand{font-size:20px}}
 </style>
 </head>
 <body>
-<header><div class="wrap"><div class="brand">🟡 MAHI SHARE</div><p>Fast, simple device-to-device file transfer</p></div></header>
+<div class="page">
+<header>
+  <div class="brand-icon" aria-hidden="true">➤</div>
+  <div class="brand">MAHI SHARE</div>
+  <p class="tagline">Fast • Simple • Secure File Transfer</p>
+  <div class="devices" aria-hidden="true"><span>▱</span><span class="arrows">↔</span><span>▯</span></div>
+</header>
 <main>
-  <section class="card">
-    <h2>1. Connect your devices</h2>
-    <p class="sub">Open this page on both devices. One device creates a room; the other scans the QR code or enters the room code.</p>
-    <div class="row">
-      <button id="createBtn">Create new room</button>
-      <input id="roomInput" type="text" maxlength="40" placeholder="Enter room code">
-      <button id="joinBtn" class="secondary">Join room</button>
-      <button id="scanBtn" class="secondary" type="button">Scan QR Code</button>
-    </div>
-    <div id="qr-reader" style="display:none;max-width:360px;margin:14px auto"></div>
+  <div class="actions">
+    <button type="button" class="action-card" id="sendCard"><span class="action-icon">⇧</span><span class="action-title">Send Files</span><span class="action-desc">PC या Phone से फाइल भेजें</span></button>
+    <button type="button" class="action-card" id="receiveCard"><span class="action-icon">⇩</span><span class="action-title">Receive Files</span><span class="action-desc">दूसरे डिवाइस से फाइल लें</span></button>
+  </div>
+  <section class="scan-section">
+    <div class="scan-icon" aria-hidden="true">▦</div>
+    <div class="scan-title">Scan QR to Connect</div>
+    <div class="scan-desc">QR स्कैन करके दोनों डिवाइस कनेक्ट करें</div>
+    <button id="scanBtn" type="button" class="secondary">Scan QR Code</button>
+  </section>
+  <section class="details" id="connectDetails">
+    <h2>Connect your devices</h2>
+    <p class="sub">एक डिवाइस पर नया room बनाएं, दूसरे डिवाइस पर QR स्कैन करें या room code डालें।</p>
+    <div class="row"><button id="createBtn">Create new room</button><input id="roomInput" type="text" maxlength="40" placeholder="Enter room code" aria-label="Enter room code"><button id="joinBtn" class="secondary">Join room</button></div>
+    <div id="qr-reader" style="display:none;max-width:360px;margin:12px auto"></div>
     <div id="qr"></div>
-    <div id="roomLabel" class="status">Not connected to a room yet.</div>
-    <p class="sub">Room link works only while the room creator is connected. Keep both devices on this page.</p>
+    <div id="roomLabel" class="status" role="status">Not connected to a room yet.</div>
+    <p class="hint">Keep both devices on this page while connecting.</p>
   </section>
-  <section class="card">
-    <h2>2. Send a file</h2>
-    <input id="fileInput" type="file">
-    <div class="row" style="margin-top:12px"><button id="sendBtn" disabled>Send selected file</button><button id="cancelBtn" class="secondary" disabled>Disconnect</button></div>
+  <section class="details" id="sendDetails">
+    <h2>Send a file</h2>
+    <input id="fileInput" type="file" aria-label="Choose a file to send">
+    <div class="row" style="margin-top:10px"><button id="sendBtn" disabled>Send selected file</button><button id="cancelBtn" class="secondary" disabled>Disconnect</button></div>
     <progress id="progress" value="0" max="100" hidden></progress>
-    <p id="transferStatus" class="sub">Choose a room and wait for the other device to connect.</p>
+    <p id="transferStatus" class="sub">Connect both devices, then choose a file.</p>
+    <p class="hint">No fixed app-level file-size limit, but very large transfers can fail if browser memory runs out.</p>
   </section>
-  <section class="card">
-    <h2>3. Received files</h2>
-    <p class="sub">Received files are assembled in this browser and saved only when you click the download link. There is no fixed app-level file size limit, but very large files may fail if this device/browser runs out of memory or the connection drops.</p>
-    <ul id="fileList"></ul>
+  <section class="details" id="receiveDetails">
+    <h2>Received files</h2>
+    <p class="sub">Received files appear here after the transfer finishes. Click a link to download.</p>
+    <ul id="fileList"><li class="sub" id="emptyFiles">No files received yet.</li></ul>
   </section>
-  <div class="note"><b>Privacy:</b> File bytes are sent over an encrypted WebRTC connection when a direct route is available. The signaling server exchanges connection messages, not file contents. This starter version uses public STUN servers only; some networks require a TURN relay and may fail to connect. Do not use this demo for confidential files until you have added abuse protection and tested it carefully.</div>
+  <div class="privacy"><b>Privacy:</b> Files use an encrypted WebRTC connection when a direct route is available. Some networks may require a TURN relay. Avoid confidential files until this beta has been tested carefully.</div>
 </main>
 <footer>MAHI BLOGGER · MAHI SHARE · Free beta</footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 (() => {
@@ -149,7 +156,7 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
           const blob=new Blob(receiveChunks,{type:receiveMeta.type||"application/octet-stream"});
           const url=URL.createObjectURL(blob), li=document.createElement("li"), a=document.createElement("a");
           a.href=url;a.download=receiveMeta.name||"received-file";a.textContent="Download "+a.download;
-          li.appendChild(a);$("fileList").prepend(li);
+          li.appendChild(a);const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").prepend(li);
           transfer("Received "+receiveMeta.name+" successfully.");
           receiveMeta=null;receiveChunks=[];receiveBytes=0;
         }
@@ -159,33 +166,20 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
       }
     };
   }
+  const openDetails=id=>$(id).classList.toggle("open");
+  $("sendCard").onclick=()=>{openDetails("sendDetails");$("connectDetails").classList.add("open")};
+  $("receiveCard").onclick=()=>{openDetails("receiveDetails");$("connectDetails").classList.add("open")};
+  document.querySelector(".scan-section").addEventListener("click",e=>{if(e.target.id!=="scanBtn")$("connectDetails").classList.add("open")});
+  scanBtn.onclick=async()=>{
+    $("connectDetails").classList.add("open");
+    const box=$("qr-reader");
+    if(scanning && qrScanner){try{await qrScanner.stop();await qrScanner.clear()}catch(e){} qrScanner=null;scanning=false;box.style.display="none";scanBtn.textContent="Scan QR Code";return;}
+    if(!window.Html5Qrcode){status("QR scanner could not load. Enter the room code manually.");return;}
+    box.style.display="block";scanBtn.disabled=true;status("Allow camera access to scan the room QR code.");
+    try{qrScanner=new Html5Qrcode("qr-reader");await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},async decodedText=>{let code=decodedText;try{const u=new URL(decodedText);code=u.searchParams.get("room")||decodedText}catch(e){}code=String(code).trim();try{await qrScanner.stop();await qrScanner.clear()}catch(e){}qrScanner=null;scanning=false;box.style.display="none";scanBtn.disabled=false;scanBtn.textContent="Scan QR Code";roomInput.value=code;connectToRoom(code);},()=>{});scanning=true;scanBtn.textContent="Stop Scanner";}catch(e){status("Could not start camera. Allow camera permission or enter the room code manually.");if(qrScanner){try{await qrScanner.clear()}catch(err){}}qrScanner=null;scanning=false;box.style.display="none";}finally{scanBtn.disabled=false;}
+  };
   createBtn.onclick=()=>connectToRoom(randomRoom());
   joinBtn.onclick=()=>connectToRoom(roomInput.value);
-  scanBtn.onclick=async()=>{
-    const box=$("qr-reader");
-    if(scanning && qrScanner){
-      try{await qrScanner.stop();await qrScanner.clear()}catch(e){}
-      qrScanner=null;scanning=false;box.style.display="none";scanBtn.textContent="Scan QR Code";return;
-    }
-    if(!window.Html5Qrcode){status("QR scanner could not load. Please enter the room code manually.");return;}
-    box.style.display="block";scanBtn.disabled=true;status("Allow camera access to scan the room QR code.");
-    try{
-      qrScanner=new Html5Qrcode("qr-reader");
-      await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},async decodedText=>{
-        let code=decodedText;
-        try{const u=new URL(decodedText);code=u.searchParams.get("room")||decodedText}catch(e){}
-        code=String(code).trim();
-        try{await qrScanner.stop();await qrScanner.clear()}catch(e){}
-        qrScanner=null;scanning=false;box.style.display="none";scanBtn.disabled=false;scanBtn.textContent="Scan QR Code";
-        roomInput.value=code;connectToRoom(code);
-      },()=>{});
-      scanning=true;scanBtn.textContent="Stop Scanner";
-    }catch(e){
-      status("Could not start camera. Allow camera permission or enter the room code manually.");
-      if(qrScanner){try{await qrScanner.clear()}catch(err){}}
-      qrScanner=null;scanning=false;box.style.display="none";
-    }finally{scanBtn.disabled=false;}
-  };
   $("fileInput").onchange=setSend;
   sendBtn.onclick=async()=>{
     const file=$("fileInput").files[0];
@@ -213,7 +207,7 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
   };
   cancelBtn.onclick=()=>{signal({type:"hangup"});cleanup();status("Disconnected.");transfer("Ready when you are.");$("qr").innerHTML=""};
   const q=new URLSearchParams(location.search).get("room");
-  if(q){roomInput.value=q;connectToRoom(q)}
+  if(q){$("connectDetails").classList.add("open");roomInput.value=q;connectToRoom(q)}
 })();
 </script>
 </body>
