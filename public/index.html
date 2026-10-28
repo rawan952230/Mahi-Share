@@ -47,7 +47,7 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
   </section>
   <section class="card">
     <h2>3. Received files</h2>
-    <p class="sub">Received files are assembled in this browser and saved only when you click the download link.</p>
+    <p class="sub">Received files are assembled in this browser and saved only when you click the download link. There is no fixed app-level file size limit, but very large files may fail if this device/browser runs out of memory or the connection drops.</p>
     <ul id="fileList"></ul>
   </section>
   <div class="note"><b>Privacy:</b> File bytes are sent over an encrypted WebRTC connection when a direct route is available. The signaling server exchanges connection messages, not file contents. This starter version uses public STUN servers only; some networks require a TURN relay and may fail to connect. Do not use this demo for confidential files until you have added abuse protection and tested it carefully.</div>
@@ -190,7 +190,10 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
   sendBtn.onclick=async()=>{
     const file=$("fileInput").files[0];
     if(!file||!dc||dc.readyState!=="open")return;
-    if(file.size>500*1024*1024){transfer("This beta limits files to 500 MB. Choose a smaller file.");return}
+    if(file.size>1024*1024*1024){
+      const proceed=confirm("This file is larger than 1 GB. Large transfers can fail or use substantial memory on the receiving device. Continue anyway?");
+      if(!proceed)return;
+    }
     sendBusy=true;setSend();$("progress").hidden=false;$("progress").value=0;
     transfer("Preparing "+file.name+"…");
     try{
