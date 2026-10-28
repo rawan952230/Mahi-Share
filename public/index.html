@@ -31,7 +31,9 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
       <button id="createBtn">Create new room</button>
       <input id="roomInput" type="text" maxlength="40" placeholder="Enter room code">
       <button id="joinBtn" class="secondary">Join room</button>
+      <button id="scanBtn" class="secondary" type="button">Scan QR Code</button>
     </div>
+    <div id="qr-reader" style="display:none;max-width:360px;margin:14px auto"></div>
     <div id="qr"></div>
     <div id="roomLabel" class="status">Not connected to a room yet.</div>
     <p class="sub">Room link works only while the room creator is connected. Keep both devices on this page.</p>
@@ -52,11 +54,13 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
 </main>
 <footer>MAHI BLOGGER · MAHI SHARE · Free beta</footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
   const roomInput=$("roomInput"), roomLabel=$("roomLabel"), transferStatus=$("transferStatus");
-  const createBtn=$("createBtn"), joinBtn=$("joinBtn"), sendBtn=$("sendBtn"), cancelBtn=$("cancelBtn");
+  const createBtn=$("createBtn"), joinBtn=$("joinBtn"), sendBtn=$("sendBtn"), cancelBtn=$("cancelBtn"), scanBtn=$("scanBtn");
+  let qrScanner=null, scanning=false;
   let ws=null, room="", initiator=false, pc=null, dc=null, joined=false, peerReady=false;
   let receiveMeta=null, receiveChunks=[], receiveBytes=0, sendBusy=false;
   const CHUNK=16*1024;
@@ -157,6 +161,31 @@ progress{width:100%;height:16px;margin-top:12px}#fileList{padding-left:20px}foot
   }
   createBtn.onclick=()=>connectToRoom(randomRoom());
   joinBtn.onclick=()=>connectToRoom(roomInput.value);
+  scanBtn.onclick=async()=>{
+    const box=$("qr-reader");
+    if(scanning && qrScanner){
+      try{await qrScanner.stop();await qrScanner.clear()}catch(e){}
+      qrScanner=null;scanning=false;box.style.display="none";scanBtn.textContent="Scan QR Code";return;
+    }
+    if(!window.Html5Qrcode){status("QR scanner could not load. Please enter the room code manually.");return;}
+    box.style.display="block";scanBtn.disabled=true;status("Allow camera access to scan the room QR code.");
+    try{
+      qrScanner=new Html5Qrcode("qr-reader");
+      await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},async decodedText=>{
+        let code=decodedText;
+        try{const u=new URL(decodedText);code=u.searchParams.get("room")||decodedText}catch(e){}
+        code=String(code).trim();
+        try{await qrScanner.stop();await qrScanner.clear()}catch(e){}
+        qrScanner=null;scanning=false;box.style.display="none";scanBtn.disabled=false;scanBtn.textContent="Scan QR Code";
+        roomInput.value=code;connectToRoom(code);
+      },()=>{});
+      scanning=true;scanBtn.textContent="Stop Scanner";
+    }catch(e){
+      status("Could not start camera. Allow camera permission or enter the room code manually.");
+      if(qrScanner){try{await qrScanner.clear()}catch(err){}}
+      qrScanner=null;scanning=false;box.style.display="none";
+    }finally{scanBtn.disabled=false;}
+  };
   $("fileInput").onchange=setSend;
   sendBtn.onclick=async()=>{
     const file=$("fileInput").files[0];
