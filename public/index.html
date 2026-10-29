@@ -123,9 +123,22 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   document.querySelector(".scan-section").addEventListener("click",e=>{if(e.target.id!=="scanBtn")$("connectDetails").classList.add("open")});
   $("chooseSaveBtn").onclick=async()=>{
     if(!window.showSaveFilePicker){$("saveStatus").textContent="Direct-to-disk receiving requires a supported desktop Chrome/Edge browser on HTTPS or localhost.";return}
-    try{saveHandle=await window.showSaveFilePicker({suggestedName:"received-file"});$("saveStatus").textContent="Save location selected. Keep this page open until transfer finishes."}
-    catch(e){if(e.name!=="AbortError")$("saveStatus").textContent="Could not select save location: "+e.message}
-  };
+   try {
+  saveHandle = await window.showSaveFilePicker({
+    suggestedName: "received-file"
+  });
+
+  $("saveStatus").textContent =
+    "Save location selected: " + saveHandle.name +
+    ". Now connect the sender and start the transfer.";
+
+} catch (e) {
+  if (e.name !== "AbortError") {
+    $("saveStatus").textContent =
+      "Could not select save location: " + e.message;
+  }
+}
+};
   scanBtn.onclick=async()=>{
     $("connectDetails").classList.add("open");const box=$("qr-reader");
     if(scanning&&qrScanner){try{await qrScanner.stop();await qrScanner.clear()}catch(e){}qrScanner=null;scanning=false;box.style.display="none";scanBtn.textContent="Scan QR Code";return}
