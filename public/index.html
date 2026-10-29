@@ -38,14 +38,14 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
 <div id="qr-reader" style="display:none;max-width:360px;margin:12px auto"></div><div id="qr"></div><div id="roomLabel" class="status" role="status">Not connected to a room yet.</div><p class="hint">Keep both devices on this page while connecting. दोनों तरफ PIN मैच होना ज़रूरी है — गलत PIN पर कनेक्शन बंद हो जाएगा।</p>
 </section>
 <section class="details" id="sendDetails">
-<h2>Send files or a folder (max 10 GB per file)</h2>
+<h2>Send files or a folder (max 10 GB per file)</h2><p class="sub">files/folder को सीधे page पर drag &amp; drop भी कर सकते हैं।</p>
 <div class="pick"><div><label for="fileInput">Files (एक या कई)</label><input id="fileInput" type="file" multiple aria-label="Choose files to send"></div><div><label for="folderInput">पूरा Folder</label><input id="folderInput" type="file" webkitdirectory aria-label="Choose a folder to send"></div></div>
 <p id="selInfo" class="sub">Nothing selected.</p>
-<div class="row" style="margin-top:6px"><button id="sendBtn" disabled>Send selected</button><button id="cancelBtn" class="secondary" disabled>Disconnect</button></div>
-<progress id="progress" value="0" max="100" hidden></progress><p id="transferStatus" class="sub">Connect both devices, then choose files.</p><p class="hint">Transfer बीच में टूटे तो दोबारा connect करके वही files फिर से Send करें — जो हिस्सा पहुँच चुका है वो दोबारा नहीं जाएगा (receiver ने Save Folder चुना हो तो)।</p>
+<div class="row" style="margin-top:6px"><button id="sendBtn" disabled>Send selected</button><button id="clearBtn" class="secondary" type="button">Clear</button><button id="cancelBtn" class="secondary" disabled>Disconnect</button></div>
+<progress id="progress" value="0" max="100" hidden></progress><p id="transferStatus" class="sub">Connect both devices, then choose files.</p><p class="hint">Transfer बीच में टूटे तो दोबारा connect करके वही files फिर से Send करें — जो हिस्सा receiver के folder में पहुँच चुका है वो दोबारा नहीं जाएगा (receiver ने Save Folder चुना हो तो)। Connection टूटे तो app अपने-आप दोबारा जुड़कर transfer जारी रखता है।</p>
 </section>
 <section class="details" id="receiveDetails">
-<h2>Received files</h2><p class="sub">Desktop Chrome/Edge: एक बार <b>Save Folder</b> चुनें — हर फाइल (folder structure के साथ) अपने original नाम और extension में उसी folder में सेव होगी। बाकी browsers/phone पर (1 GB तक) फाइल original नाम से download होगी।</p>
+<h2>Incoming / Received files</h2><p class="sub">Desktop Chrome/Edge: एक बार <b>Save Folder</b> चुनें — हर फाइल (folder structure के साथ) अपने original नाम और extension में उसी folder में सेव होगी। बाकी browsers/phone पर (1 GB तक) फाइल original नाम से download होगी।</p>
 <button id="chooseSaveBtn" type="button">Choose Save Folder</button><p id="saveStatus" class="sub">No save folder selected.</p>
 <ul id="fileList"><li class="sub" id="emptyFiles">No files received yet.</li></ul>
 </section>
@@ -61,11 +61,11 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   const createBtn=$("createBtn"), joinBtn=$("joinBtn"), sendBtn=$("sendBtn"), cancelBtn=$("cancelBtn"), scanBtn=$("scanBtn");
 
   // ---------- settings ----------
-  const P            = 4;                       // parallel WebRTC connections (lanes)
-  const SEG          = 4*1024*1024;             // resume / scheduling unit
+  const P            = 6;                       // parallel WebRTC connections (lanes)
+  const SEG          = 8*1024*1024;             // resume / scheduling unit
   const PAYLOAD      = 65536-12;                // 64 KB messages: 12-byte header + data
-  const BUF_HIGH     = 4*1024*1024;             // per-lane send buffer limit
-  const BUF_LOW      = 1024*1024;
+  const BUF_HIGH     = 8*1024*1024;             // per-lane send buffer limit
+  const BUF_LOW      = 2*1024*1024;
   const MAX_INFLIGHT = 12;                      // segments sent but not yet confirmed (~48 MB)
   const MEM_LIMIT    = 1024*1024*1024;          // browsers without folder access: 1 GB max
   const MAX_FILE_SIZE= 10*1024*1024*1024;
@@ -80,6 +80,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   let qrScanner=null, scanning=false, ws=null, room="", initiator=false, joined=false, iAmCreator=false;
   let pin="", keyPromise=null, msgChain=Promise.resolve();
   let pcs=[], chans=[], ctl=null, dataChans=[];
+  let sess=null, userLeft=true, retry=0, retryTimer=null, connWatch=null, wantResume=false, resumeSig="", dropped=[], routeText="";
   const waiters=new Map(), early=new Map();
   let fileSeq=0, sendBusy=false, curSend=null;
   const recvFiles=new Map(); let rxBatch=null, dirHandle=null;
@@ -105,9 +106,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   function segLen(size,i){return Math.min(SEG,size-i*SEG)}
   function encodeRanges(set){const a=[...set].sort((x,y)=>x-y),out=[];let i=0;while(i<a.length){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;out.push(i===j?""+a[i]:a[i]+"-"+a[j]);i=j+1}return out.join(",")}
   function decodeRanges(str,max){const s=new Set();String(str||"").split(",").forEach(p=>{if(!p)return;const [a,b]=p.split("-").map(Number);const e=isNaN(b)?a:b;for(let k=a;k<=e&&k<max;k++)if(k>=0)s.add(k)});return s}
-  const RKEY="mahi_resume_v1";
-  function loadResume(){try{return JSON.parse(localStorage.getItem(RKEY)||"{}")}catch{return{}}}
-  function saveResume(o){try{localStorage.setItem(RKEY,JSON.stringify(o))}catch{}}
+  function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(16)}
 
   function expect(key,ms){
     const p=new Promise((resolve,reject)=>{
@@ -124,7 +123,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   function getItems(){
     const a=[...$("fileInput").files].map(f=>({file:f,path:f.name}));
     const b=[...$("folderInput").files].map(f=>({file:f,path:f.webkitRelativePath||f.name}));
-    return a.concat(b);
+    return a.concat(b,dropped);
   }
   function updateSel(){
     const it=getItems();
@@ -169,10 +168,11 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     else{status("❌ PIN match नहीं हुआ या device verify नहीं हुआ — connection बंद किया गया।");resetPeers()}
   }
   function onAuthed(w){
-    if(w.label==="ctl"){ctl=w;transfer("Secure connection ready.")}
+    if(w.label==="ctl"){ctl=w;retry=0;clearTimeout(retryTimer);clearTimeout(connWatch);transfer("Secure connection ready.");setTimeout(showRoute,2500)}
     else if(!dataChans.includes(w))dataChans.push(w);
-    if(ctl)status("✅ Connected & verified · "+dataChans.length+"/"+P+" fast lanes ready");
+    if(ctl)status("✅ Connected & verified · "+dataChans.length+"/"+P+" fast lanes ready"+routeText);
     setSend();
+    if(w.label==="ctl"&&wantResume&&!sendBusy)setTimeout(()=>{if(wantResume&&!sendBusy&&ctl)startSend(true)},800);
   }
 
   // ---------- signaling / connections ----------
@@ -189,7 +189,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     if(ws){const s=ws;ws=null;try{s.close()}catch{}}
     cancelBtn.disabled=true;
   }
-  function connectToRoom(code,pinValue,creator){
+  function connectToRoom(code,pinValue,creator,auto){
     cleanup();
     if(!window.crypto||!crypto.subtle){status("Secure transfer के लिए page HTTPS पर खोलें।");return}
     room=code.trim().replace(/[^a-zA-Z0-9_-]/g,"").slice(0,40).toUpperCase();
@@ -197,6 +197,8 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     pin=String(pinValue||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
     if(!pin){status("दूसरे device पर दिख रहा PIN डालें।");return}
     iAmCreator=!!creator;$("pinBox").style.display="none";$("qr").innerHTML="";
+    if(!auto){userLeft=false;retry=0;wantResume=false;resumeSig="";clearTimeout(retryTimer)}
+    sess={room,pin,creator:!!creator};
     status("Connecting to signaling server…");
     const sock=new WebSocket(wsUrl());ws=sock;msgChain=Promise.resolve();
     sock.onopen=()=>signal({type:"join",room});
@@ -206,7 +208,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
       msgChain=msgChain.then(()=>handleSignal(m)).catch(e=>status("Connection error: "+e.message));
     };
     sock.onerror=()=>status("Could not reach the signaling server. Check the hosted URL and try again.");
-    sock.onclose=()=>{if(ws===sock&&joined)status("Signaling connection closed. Reconnect by creating/joining a room again.")};
+    sock.onclose=()=>{if(ws!==sock)return;if(!ctl)scheduleReconnect("signaling")};
   }
   async function handleSignal(m){
     if(m.type==="joined"){
@@ -215,11 +217,11 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
       showQr();status("Room "+room+" ready. "+(initiator?"Waiting for the other device…":"Joined room; waiting for host…"));cancelBtn.disabled=false;
     }
     else if(m.type==="peer-ready"){
-      status("Other device found. Establishing secure connection…");
+      status("Other device found. Establishing secure connection…");armWatch();
       if(initiator){for(let i=0;i<P;i++)await createPeer(i,true)}
     }
     else if(m.type==="offer"){
-      const i=Number(m.description.idx)||0;await createPeer(i,false);
+      const i=Number(m.description.idx)||0;armWatch();await createPeer(i,false);
       const pc=pcs[i].pc;await pc.setRemoteDescription({type:m.description.type,sdp:m.description.sdp});
       const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
       signal({type:"answer",description:{type:pc.localDescription.type,sdp:pc.localDescription.sdp,idx:i}});
@@ -233,16 +235,16 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
       if(pcs[i]){try{await pcs[i].pc.addIceCandidate(c)}catch(e){console.warn(e)}}
     }
     else if(m.type==="peer-left"){
-      status("The other device disconnected. Keep this room open or create a new room.");resetPeers();
+      status("दूसरा device disconnect हुआ — दोबारा जुड़ने की कोशिश…");resetPeers();scheduleReconnect("peer left");
     }
-    else if(m.type==="error"){status(m.message)}
+    else if(m.type==="error"){status(m.message);if(sess&&!userLeft)scheduleReconnect("server")}
   }
   async function createPeer(idx,makeOffer){
     if(pcs[idx])return;
     const pc=new RTCPeerConnection({iceServers:ICE});
     const entry={pc,idx};pcs[idx]=entry;
     pc.onicecandidate=e=>{if(e.candidate){const c=e.candidate.toJSON();c.idx=idx;signal({type:"candidate",candidate:c})}};
-    pc.onconnectionstatechange=()=>{if(pcs[idx]===entry&&["failed","closed"].includes(pc.connectionState)&&idx===0)status("Connection "+pc.connectionState+". Try again; some networks need a TURN relay.")};
+    pc.onconnectionstatechange=()=>{if(pcs[idx]===entry&&pc.connectionState==="failed"&&idx===0){resetPeers();scheduleReconnect("network")}};
     if(makeOffer){
       if(idx===0)openChannel(entry,pc.createDataChannel("ctl"));
       openChannel(entry,pc.createDataChannel("d"+idx));
@@ -261,7 +263,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   }
   function onChanClose(w){
     const i=dataChans.indexOf(w);if(i>=0)dataChans.splice(i,1);
-    if(w===ctl){ctl=null;abortSend("Connection closed");abortReceives();status("Connection closed. Reconnect to resume.");transfer("Connection closed.")}
+    if(w===ctl){ctl=null;abortSend("Connection closed");abortReceives();transfer("Connection closed.");scheduleReconnect("connection")}
     setSend();
   }
   async function onChanMsg(w,data){
@@ -278,6 +280,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     switch(m.k){
       case "batch": onBatch(m);break;
       case "batch-ok": case "batch-no": fire("batch",m);break;
+      case "list": onList(m);break;
       case "file": onFile(m);break;
       case "ready": fire("ready:"+m.id,m);break;
       case "seg": onSegAck(m);break;
@@ -302,10 +305,29 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     const total=Number(m.total)||0,count=Number(m.count)||0;
     if(!dirHandle&&total>MEM_LIMIT){ctlSend({k:"batch-no",msg:"Receiver को पहले 'Choose Save Folder' दबाना होगा (desktop Chrome/Edge) — इतनी बड़ी फाइल के लिए।"});return}
     const prev=(m.preview||[]).map(f=>"• "+String(f.path).slice(0,80)+" ("+fmt(Number(f.size)||0)+")").join("\n")+(count>(m.preview||[]).length?"\n… +"+(count-m.preview.length)+" more":"");
-    const ok=confirm("Incoming: "+count+" file(s), "+fmt(total)+"\n\n"+prev+"\n\n"+(dirHandle?"Save to folder: "+dirHandle.name:"Browser Downloads में सेव होगी")+"\n\nAccept?");
+    const sig=count+"|"+total+"|"+((m.preview&&m.preview[0]&&m.preview[0].path)||"");
+    const ok=(sig===resumeSig)||confirm("Incoming: "+count+" file(s), "+fmt(total)+"\n\n"+prev+"\n\n"+(dirHandle?"Save to folder: "+dirHandle.name:"Browser Downloads में सेव होगी")+"\n\nAccept?");
     if(!ok){ctlSend({k:"batch-no",msg:"Receiver ने मना कर दिया।"});return}
-    rxBatch={total,done:0,start:performance.now()};
+    rxBatch={total,done:0,start:performance.now(),sig};resumeSig="";rxRows=[];
     ctlSend({k:"batch-ok"});
+  }
+  let rxRows=[];
+  function rowSet(idx,text,state){
+    const r=rxRows[idx];if(!r)return;
+    r.textContent=text;
+    r.style.color=state==="done"?"#116b2d":state==="fail"?"#b00020":state==="active"?"#087bd3":"#666";
+  }
+  function onList(m){
+    if(!rxBatch)return;
+    const empty=$("emptyFiles");if(empty)empty.remove();
+    const base=Number(m.from)||0;
+    (m.files||[]).forEach((f,k)=>{
+      const idx=base+k;if(rxRows[idx]||idx>20000)return;
+      const li=document.createElement("li");
+      li.dataset.path=String(f.path).slice(0,200);
+      rxRows[idx]=li;$("fileList").appendChild(li);
+      rowSet(idx,"⏳ "+li.dataset.path+" ("+fmt(Number(f.size)||0)+") — waiting","wait");
+    });
   }
   async function onFile(m){
     try{
@@ -314,19 +336,27 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
       if(!(size>=0)||size>MAX_FILE_SIZE||Number(m.seg)!==SEG)throw new Error("Invalid file info");
       const parts=String(m.path||m.name).split("/").map(sanitizeName).filter(Boolean);
       const fname=parts.pop()||"received-file";
-      const rf={id:m.id,path:parts.concat(fname).join("/"),size,segs:Math.ceil(size/SEG),done:new Set(),got:new Map(),cnt:new Map(),queue:Promise.resolve(),writer:null,mem:null,dir:null,fh:null,partName:"",finalName:"",finished:false,type:m.type,key:"",doneBytes:0};
+      const rf={id:m.id,idx:Number(m.idx),path:parts.concat(fname).join("/"),fname,size,segs:Math.ceil(size/SEG),done:new Set(),got:new Map(),cnt:new Map(),queue:Promise.resolve(),segW:new Map(),mem:null,dir:null,tmp:null,tmpName:"",finished:false,type:m.type,doneBytes:0};
       let have=new Set();
       if(dirHandle){
         let dir=dirHandle;for(const p of parts)dir=await dir.getDirectoryHandle(p,{create:true});
-        rf.dir=dir;rf.key=[rf.path,size,m.mtime].join("|");
-        const rec=loadResume()[rf.key];let resuming=false;
-        if(rec&&rec.seg===SEG&&rec.size===size){try{await dir.getFileHandle(rec.part);rf.partName=rec.part;rf.finalName=rec.final;have=decodeRanges(rec.done,rf.segs);resuming=true}catch{}}
-        if(!resuming){rf.finalName=await uniqueName(dir,fname);rf.partName=rf.finalName+".mahipart"}
-        rf.fh=await dir.getFileHandle(rf.partName,{create:true});
-        rf.writer=await rf.fh.createWritable({keepExistingData:resuming});
-      }else{rf.mem=new Map();rf.finalName=fname}
+        rf.dir=dir;
+        // every 4 MB segment is saved as its own small file, so finished segments survive a crash/reload
+        const key=[rf.path,size,m.mtime].join("|");
+        rf.tmpName=".mahi-tmp-"+hashStr(key)+hashStr(key+"#"+size);
+        rf.tmp=await dir.getDirectoryHandle(rf.tmpName,{create:true});
+        for await(const [name,h] of rf.tmp.entries()){
+          const mm=/^s(\d+)$/.exec(name);
+          if(!mm||h.kind!=="file")continue;
+          const i=Number(mm[1]);if(i>=rf.segs)continue;
+          const f=await h.getFile();
+          if(f.size===segLen(size,i))have.add(i);
+        }
+      }else rf.mem=new Map();
       rf.done=have;have.forEach(i=>rf.doneBytes+=segLen(size,i));
+      rxBatch.done+=rf.doneBytes;
       recvFiles.set(m.id,rf);
+      rowSet(rf.idx,"⬇ "+rf.path+" — "+Math.round(rf.doneBytes/Math.max(1,size)*100)+"%"+(have.size?" (पहले का हिस्सा मिला, आगे से जारी)":""),"active");
       ctlSend({k:"ready",id:m.id,have:encodeRanges(have)});
       if(have.size===rf.segs)rf.queue=rf.queue.then(()=>finalizeReceive(rf));
     }catch(err){ctlSend({k:"fail",id:m.id,msg:"Receiver: "+err.message});transfer("Could not prepare file: "+err.message)}
@@ -342,70 +372,81 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     const data=new Uint8Array(buf,12);
     const need=Math.ceil(segLen(rf.size,si)/PAYLOAD);
     rf.queue=rf.queue.then(async()=>{
-      if(rf.writer)await rf.writer.write({type:"write",position:pos,data});
-      else if(rf.mem)rf.mem.set(pos,data);
+      if(rf.tmp){
+        let sw=rf.segW.get(si);
+        if(!sw){const fh=await rf.tmp.getFileHandle("s"+si,{create:true});sw=await fh.createWritable();rf.segW.set(si,sw)}
+        await sw.write({type:"write",position:pos-si*SEG,data});
+      }else if(rf.mem)rf.mem.set(pos,data);
       else return;
       const c=(rf.cnt.get(si)||0)+1;rf.cnt.set(si,c);
       if(c>=need&&!rf.done.has(si)){
+        if(rf.tmp){const sw=rf.segW.get(si);rf.segW.delete(si);if(sw)await sw.close()}   // segment is now safely on disk
         rf.done.add(si);rf.got.delete(si);rf.cnt.delete(si);
         const L=segLen(rf.size,si);rf.doneBytes+=L;
         if(rxBatch){rxBatch.done+=L;const secs=Math.max(.1,(performance.now()-rxBatch.start)/1000);transfer("Receiving "+rf.path+" — "+Math.min(100,Math.round(rxBatch.done/Math.max(1,rxBatch.total)*100))+"% ("+(rxBatch.done/1048576/secs).toFixed(1)+" MB/s)")}
+        rowSet(rf.idx,"⬇ "+rf.path+" — "+Math.min(100,Math.round(rf.doneBytes/Math.max(1,rf.size)*100))+"%","active");
         ctlSend({k:"seg",id:rf.id,i:si});
         if(rf.done.size===rf.segs)await finalizeReceive(rf);
       }
     }).catch(err=>{
       rf.finished=true;transfer("Disk write failed: "+err.message);
-      try{if(rf.writer)rf.writer.abort()}catch{}rf.writer=null;rf.mem=null;
+      rf.segW.forEach(w=>{try{w.abort()}catch{}});rf.segW.clear();rf.mem=null;
+      rowSet(rf.idx,"❌ "+rf.path+" — "+err.message,"fail");
       ctlSend({k:"fail",id:rf.id,msg:"Disk write failed: "+err.message});
     });
   }
-  async function renameInDir(dir,fh,oldName,newName){
-    if(typeof fh.move==="function"){try{await fh.move(newName);return}catch(e){}}
-    const src=await fh.getFile();const nfh=await dir.getFileHandle(newName,{create:true});
-    const w=await nfh.createWritable();await src.stream().pipeTo(w);await dir.removeEntry(oldName);
-  }
   async function finalizeReceive(rf){
     rf.finished=true;
+    let savedAs=rf.fname;
     try{
-      if(rf.writer){
-        await rf.writer.close();rf.writer=null;
-        await renameInDir(rf.dir,rf.fh,rf.partName,rf.finalName);
-        const all=loadResume();delete all[rf.key];saveResume(all);
+      if(rf.tmp){
+        transfer("Saving "+rf.path+" … (हिस्से जोड़कर final file बन रही है)");
+        savedAs=await uniqueName(rf.dir,rf.fname);
+        const fh=await rf.dir.getFileHandle(savedAs,{create:true});
+        const w=await fh.createWritable();
+        try{
+          for(let i=0;i<rf.segs;i++){
+            const sfh=await rf.tmp.getFileHandle("s"+i);
+            const f=await sfh.getFile();
+            await w.write(await f.arrayBuffer());
+          }
+          await w.close();
+        }catch(e){try{await w.abort()}catch{}throw e}
+        try{await rf.dir.removeEntry(rf.tmpName,{recursive:true})}catch{}
       }else if(rf.mem){
         const keys=[...rf.mem.keys()].sort((a,b)=>a-b);
         const blob=new Blob(keys.map(k=>rf.mem.get(k)),{type:rf.type||"application/octet-stream"});
         rf.mem=null;
         const url=URL.createObjectURL(blob),a=document.createElement("a");
-        a.href=url;a.download=rf.finalName;document.body.appendChild(a);a.click();a.remove();
+        a.href=url;a.download=rf.fname;document.body.appendChild(a);a.click();a.remove();
         setTimeout(()=>URL.revokeObjectURL(url),60000);
       }
-      const li=document.createElement("li"),span=document.createElement("span");
-      span.textContent="Saved: "+(dirHandle?dirHandle.name+"/":"")+rf.path;li.appendChild(span);
-      const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").prepend(li);
+      const label="✔ "+rf.path+(savedAs!==rf.fname?" → "+savedAs:"")+" — saved"+(dirHandle?" in "+dirHandle.name:"");
+      if(rxRows[rf.idx])rowSet(rf.idx,label,"done");
+      else{const li=document.createElement("li");li.textContent=label;li.style.color="#116b2d";const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").appendChild(li)}
       transfer("Received and saved "+rf.path+" ✔");
-      $("saveStatus").textContent=(dirHandle?"Folder: "+dirHandle.name+" · ":"")+"Last saved: "+rf.path;
+      $("saveStatus").textContent=(dirHandle?"Folder: "+dirHandle.name+" · ":"")+"Last saved: "+savedAs;
       ctlSend({k:"done",id:rf.id});
     }catch(err){
-      transfer("Saving failed: "+err.message);ctlSend({k:"fail",id:rf.id,msg:"Saving failed: "+err.message});
+      transfer("Saving failed: "+err.message);rowSet(rf.idx,"❌ "+rf.path+" — "+err.message,"fail");
+      ctlSend({k:"fail",id:rf.id,msg:"Saving failed: "+err.message});
     }
     recvFiles.delete(rf.id);
   }
   async function abortReceives(){
-    const list=[...recvFiles.values()];recvFiles.clear();rxBatch=null;
+    const list=[...recvFiles.values()];recvFiles.clear();if(rxBatch&&rxBatch.done<rxBatch.total)resumeSig=rxBatch.sig;rxBatch=null;
     for(const rf of list){
       if(rf.finished)continue;rf.finished=true;
-      try{
-        await rf.queue.catch(()=>{});
-        if(rf.writer){
-          await rf.writer.close();rf.writer=null;           // commits the partial data to disk
-          if(rf.done.size>0){const all=loadResume();all[rf.key]={part:rf.partName,final:rf.finalName,seg:SEG,done:encodeRanges(rf.done),size:rf.size,t:Date.now()};saveResume(all)}
-        }
-      }catch{}
+      try{await rf.queue.catch(()=>{})}catch{}
+      for(const w of rf.segW.values()){try{await w.abort()}catch{}}   // unfinished segment is discarded; finished ones stay on disk
+      rf.segW.clear();
+      rowSet(rf.idx,"⚠ "+rf.path+" — रुक गया ("+Math.round(rf.doneBytes/Math.max(1,rf.size)*100)+"% सुरक्षित), दोबारा connect करने पर वहीं से जारी होगा","fail");
     }
   }
 
   // ---------- SENDER ----------
   function abortSend(reason){
+    if(sendBusy&&/Connection/i.test(reason))wantResume=true;
     if(curSend){curSend.aborted=true;curSend.abortReason=reason;wake(curSend)}
     failAll(new Error(reason));
   }
@@ -470,10 +511,10 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     while(st.acked.size<st.segs&&!st.aborted&&Date.now()<end)await Promise.race([new Promise(r=>st.wakers.push(r)),sleep(1000)]);
     if(st.aborted)throw new Error(st.abortReason||"Aborted");
   }
-  async function sendOne(it,ov){
+  async function sendOne(it,ov,idx){
     const file=it.file,id=++fileSeq,size=file.size,segs=Math.ceil(size/SEG);
     const pReady=expect("ready:"+id,60000);
-    ctlSend({k:"file",id,name:file.name,path:it.path,size,type:file.type||"application/octet-stream",mtime:file.lastModified,seg:SEG});
+    ctlSend({k:"file",id,idx,name:file.name,path:it.path,size,type:file.type||"application/octet-stream",mtime:file.lastModified,seg:SEG});
     const r=await pReady;
     const have=decodeRanges(r.have,segs);let haveBytes=0;have.forEach(i=>haveBytes+=segLen(size,i));
     const st={id,file,path:it.path,size,segs,acked:have,pending:[],inflight:0,wakers:[],aborted:false,abortReason:"",sent:0,haveBytes};
@@ -486,7 +527,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     }
     if(st.acked.size<segs)throw new Error("Receiver stopped confirming data");
     updateSendUi(st,ov,true);
-    await expect("done:"+id,600000);
+    await expect("done:"+id,1800000);
     ov.doneBytes+=size;curSend=null;
   }
   async function runSend(items){
@@ -497,23 +538,27 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
     ctlSend({k:"batch",count:items.length,total,preview:items.slice(0,6).map(x=>({path:x.path,size:x.file.size}))});
     const resp=await pb;
     if(resp.k!=="batch-ok")throw new Error(resp.msg||"Receiver declined");
+    for(let i=0;i<items.length;i+=100)ctlSend({k:"list",from:i,files:items.slice(i,i+100).map(x=>({path:String(x.path).slice(0,200),size:x.file.size}))});
     const ov={total,doneBytes:0,sentSession:0,t0:performance.now(),lastUi:0};
-    for(const it of items)await sendOne(it,ov);
+    for(let k=0;k<items.length;k++)await sendOne(items[k],ov,k);
     const secs=(performance.now()-ov.t0)/1000;
     $("progress").value=100;
     transfer("✅ Done! "+items.length+" file(s) sent in "+secs.toFixed(1)+" s (avg "+(ov.sentSession/1048576/Math.max(.1,secs)).toFixed(1)+" MB/s).");
   }
-  sendBtn.onclick=async()=>{
+  async function startSend(auto){
     if(sendBusy||!ctl)return;
     const items=getItems();if(!items.length)return;
     if(items.some(x=>x.file.size>MAX_FILE_SIZE)){alert("Maximum file size is 10 GB per file.");return}
     const total=items.reduce((s,x)=>s+x.file.size,0);
-    if(!confirm("Send "+items.length+" file(s), "+fmt(total)+"? Keep both devices awake until complete."))return;
-    sendBusy=true;setSend();holdAwake();$("progress").hidden=false;$("progress").value=0;transfer("Waiting for receiver to accept…");
+    if(!auto&&!confirm("Send "+items.length+" file(s), "+fmt(total)+"? Keep both devices awake until complete."))return;
+    wantResume=false;
+    sendBusy=true;setSend();holdAwake();$("progress").hidden=false;$("progress").value=0;
+    transfer(auto?"🔄 दोबारा जुड़ गए — transfer जारी हो रहा है…":"Waiting for receiver to accept…");
     try{await runSend(items)}
-    catch(e){transfer("Transfer interrupted: "+e.message+" — reconnect करके वही files फिर Send करें, transfer वहीं से आगे बढ़ेगा।")}
+    catch(e){transfer("Transfer interrupted: "+e.message+(wantResume?" — अपने-आप दोबारा जुड़कर जारी होगा।":" — वही files फिर Send करें, transfer वहीं से आगे बढ़ेगा।"))}
     curSend=null;sendBusy=false;setSend();
-  };
+  }
+  sendBtn.onclick=()=>startSend(false);
   window.addEventListener("beforeunload",e=>{if(sendBusy||recvFiles.size){e.preventDefault();e.returnValue=""}});
 
   // ---------- keep screen awake while a transfer is running ----------
@@ -531,6 +576,53 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   setInterval(syncAwake,2000);
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncAwake()});
   if(!("wakeLock" in navigator))console.info("Screen Wake Lock not supported in this browser");
+
+  // ---------- auto-reconnect, route info, drag & drop ----------
+  function armWatch(){
+    clearTimeout(connWatch);
+    connWatch=setTimeout(()=>{if(!ctl&&sess&&!userLeft){resetPeers();scheduleReconnect("timeout")}},30000);
+  }
+  function scheduleReconnect(why){
+    if(userLeft||!sess)return;
+    if(retry>=40){status("दोबारा जुड़ नहीं पाए — Create/Join room दबाकर फिर कोशिश करें।");return}
+    clearTimeout(retryTimer);
+    const delay=Math.min(12000,800*Math.pow(2,Math.min(retry,4)));retry++;
+    status("🔄 Connection टूटा ("+why+") — "+Math.ceil(delay/1000)+" s में अपने-आप दोबारा जुड़ेंगे…");
+    retryTimer=setTimeout(()=>{if(userLeft||!sess||ctl)return;connectToRoom(sess.room,sess.pin,sess.creator,true)},delay);
+  }
+  async function showRoute(){
+    try{
+      if(!pcs[0]||!ctl)return;
+      const st=await pcs[0].pc.getStats();
+      let sel=null;
+      st.forEach(r=>{if(r.type==="transport"&&r.selectedCandidatePairId)sel=st.get(r.selectedCandidatePairId)});
+      if(!sel)st.forEach(r=>{if(r.type==="candidate-pair"&&r.nominated&&r.state==="succeeded")sel=r});
+      if(!sel)return;
+      const l=st.get(sel.localCandidateId),r=st.get(sel.remoteCandidateId);
+      const t=[l&&l.candidateType,r&&r.candidateType];
+      routeText=t.includes("relay")?" · Route: Relay (धीमा हो सकता है)":t.every(x=>x==="host")?" · Route: Local network (सबसे तेज़)":" · Route: Direct internet";
+      if(ctl)status("✅ Connected & verified · "+dataChans.length+"/"+P+" fast lanes ready"+routeText);
+    }catch{}
+  }
+  async function walkEntry(entry,path,out){
+    if(entry.isFile){await new Promise(res=>entry.file(f=>{out.push({file:f,path:path+f.name});res()},()=>res()))}
+    else if(entry.isDirectory){
+      const rd=entry.createReader();let batch;
+      do{batch=await new Promise(res=>rd.readEntries(res,()=>res([])));for(const e of batch)await walkEntry(e,path+entry.name+"/",out)}while(batch.length);
+    }
+  }
+  document.addEventListener("dragover",e=>{e.preventDefault()});
+  document.addEventListener("drop",async e=>{
+    e.preventDefault();
+    const entries=[...((e.dataTransfer&&e.dataTransfer.items)||[])].map(it=>it.webkitGetAsEntry&&it.webkitGetAsEntry()).filter(Boolean);
+    const plain=[...((e.dataTransfer&&e.dataTransfer.files)||[])];
+    const out=[];
+    if(entries.length){for(const en of entries)await walkEntry(en,"",out)}
+    else plain.forEach(f=>out.push({file:f,path:f.name}));
+    if(!out.length)return;
+    dropped=dropped.concat(out);$("sendDetails").classList.add("open");updateSel();
+  });
+  $("clearBtn").onclick=()=>{dropped=[];$("fileInput").value="";$("folderInput").value="";updateSel()};
 
   // ---------- UI wiring ----------
   const toggleDetails=id=>$(id).classList.toggle("open");
@@ -568,7 +660,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   };
   createBtn.onclick=()=>connectToRoom(randStr(10),randStr(8),true);
   joinBtn.onclick=()=>connectToRoom(roomInput.value,pinInput.value,false);
-  cancelBtn.onclick=()=>{signal({type:"hangup"});cleanup();status("Disconnected.");transfer("Ready when you are.");$("qr").innerHTML="";$("pinBox").style.display="none"};
+  cancelBtn.onclick=()=>{userLeft=true;signal({type:"hangup"});cleanup();wantResume=false;resumeSig="";sess=null;clearTimeout(retryTimer);clearTimeout(connWatch);routeText="";status("Disconnected.");transfer("Ready when you are.");$("qr").innerHTML="";$("pinBox").style.display="none"};
 
   const qs=new URLSearchParams(location.search).get("room");
   if(qs){
