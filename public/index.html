@@ -5,143 +5,92 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MAHI SHARE — File Transfer</title>
 <style>
-:root{--navy:#06365f;--blue:#087bd3;--yellow:#ffd447;--ink:#171717;--muted:#666;--line:#dedede;--bg:#fff}
+:root{--navy:#06365f;--blue:#087bd3;--yellow:#ffd447;--ink:#171717;--muted:#666;--line:#dedede}
 *{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font:15px/1.45 Arial,Helvetica,sans-serif}
 button,input{font:inherit}.page{max-width:780px;margin:20px auto 10px;padding:12px 12px 18px;border:1px solid #dedede;border-radius:17px;background:#fff}
 header{background:var(--navy);color:#fff;text-align:center;border-radius:12px;padding:17px 12px 18px;margin-bottom:12px}
 .brand-icon{font-size:23px;line-height:1.2;margin-bottom:8px}.brand{font-size:21px;font-weight:800;margin:0}.tagline{font-size:14px;margin:8px 0 11px;color:#f2f6fb}.devices{display:flex;justify-content:center;align-items:center;gap:12px;font-size:18px}.devices .arrows{color:var(--yellow);font-size:22px;font-weight:bold}
-main{margin:0;padding:0}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-card{min-height:108px;border:1px solid var(--line);border-radius:13px;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px 10px;cursor:pointer;color:var(--ink)}.action-card:hover{border-color:#9ebfe0;background:#fbfdff}.action-icon{font-size:20px;color:var(--blue);margin-bottom:7px;line-height:1}.action-title{font-size:15px;font-weight:700;margin-bottom:8px}.action-desc{font-size:14px;color:#666}.scan-section{text-align:center;padding:20px 8px 2px}.scan-icon{font-size:24px;line-height:1;margin-bottom:6px;color:#111}.scan-title{font-weight:700;font-size:15px;margin-bottom:6px}.scan-desc{font-size:14px;color:#666;margin-bottom:10px}
-button{border:0;border-radius:8px;background:var(--blue);color:white;padding:10px 14px;font-weight:700;cursor:pointer}button.secondary{background:#eef4fb;color:#174b7a}button:disabled{opacity:.45;cursor:not-allowed}input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-width:0;flex:1;font-size:15px;width:100%}input[type=file]{max-width:100%;width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;background:#fff}.details{display:none;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px}.details.open{display:block}.details h2{font-size:17px;margin:0 0 10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row button{flex:1}.sub{color:var(--muted);font-size:13px}.status{padding:10px 12px;border-radius:8px;background:#f0f5fb;color:#21466b;font-size:13px;overflow-wrap:anywhere;margin-top:10px}#qr{margin:10px 0;overflow-wrap:anywhere}#qr img,#qr canvas{max-width:100%;height:auto!important;border:6px solid white}#qr-reader{width:100%;overflow:hidden;border-radius:10px}#qr-reader video{width:100%;border-radius:10px}progress{width:100%;height:14px;margin-top:10px}#fileList{padding-left:20px}#fileList li{margin:8px 0;overflow-wrap:anywhere}.hint{font-size:12px;color:#666;margin:8px 0 0}footer{text-align:center;color:#777;font-size:12px;padding:15px 5px 2px}.privacy{font-size:12px;color:#666;margin-top:12px;padding:10px;border:1px solid #eee;border-radius:8px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-card{min-height:108px;border:1px solid var(--line);border-radius:13px;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px 10px;cursor:pointer;color:var(--ink)}.action-card:hover{border-color:#9ebfe0;background:#fbfdff}.action-icon{font-size:20px;color:var(--blue);margin-bottom:7px;line-height:1}.action-title{font-size:15px;font-weight:700;margin-bottom:8px}.action-desc{font-size:14px;color:#666}
+.scan-section{text-align:center;padding:20px 8px 2px}.scan-icon{font-size:24px;line-height:1;margin-bottom:6px;color:#111}.scan-title{font-weight:700;font-size:15px;margin-bottom:6px}.scan-desc{font-size:14px;color:#666;margin-bottom:10px}
+button{border:0;border-radius:8px;background:var(--blue);color:white;padding:10px 14px;font-weight:700;cursor:pointer}button.secondary{background:#eef4fb;color:#174b7a}button:disabled{opacity:.45;cursor:not-allowed}
+input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-width:0;flex:1;font-size:15px;width:100%}input[type=file]{max-width:100%;width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;background:#fff}
+.details{display:none;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px}.details.open{display:block}.details h2{font-size:17px;margin:0 0 10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row button{flex:1}.sub{color:var(--muted);font-size:13px}.status{padding:10px 12px;border-radius:8px;background:#f0f5fb;color:#21466b;font-size:13px;overflow-wrap:anywhere;margin-top:10px}
+#qr{margin:10px 0;overflow-wrap:anywhere}#qr img,#qr canvas{max-width:100%;height:auto!important;border:6px solid white}#qr-reader{width:100%;overflow:hidden;border-radius:10px}#qr-reader video{width:100%;border-radius:10px}progress{width:100%;height:14px;margin-top:10px}#fileList{padding-left:20px}#fileList li{margin:8px 0;overflow-wrap:anywhere}.hint{font-size:12px;color:#666;margin:8px 0 0}footer{text-align:center;color:#777;font-size:12px;padding:15px 5px 2px}.privacy{font-size:12px;color:#666;margin-top:12px;padding:10px;border:1px solid #eee;border-radius:8px}
 @media(max-width:520px){.page{margin:8px 0;padding:6px;border-radius:12px;border-left:0;border-right:0}.actions{gap:7px}.action-card{min-height:108px;padding:12px 5px}.action-title{font-size:14px}.action-desc{font-size:13px}.brand{font-size:20px}}
 </style>
 </head>
 <body>
 <div class="page">
-<header>
-  <div class="brand-icon" aria-hidden="true">➤</div>
-  <div class="brand">MAHI SHARE</div>
-  <p class="tagline">Fast • Simple • Secure File Transfer</p>
-  <div class="devices" aria-hidden="true"><span>▱</span><span class="arrows">↔</span><span>▯</span></div>
-</header>
+<header><div class="brand-icon" aria-hidden="true">➤</div><div class="brand">MAHI SHARE</div><p class="tagline">Fast • Simple • Secure File Transfer</p><div class="devices" aria-hidden="true"><span>▱</span><span class="arrows">↔</span><span>▯</span></div></header>
 <main>
-  <div class="actions">
-    <button type="button" class="action-card" id="sendCard"><span class="action-icon">⇧</span><span class="action-title">Send Files</span><span class="action-desc">PC या Phone से फाइल भेजें</span></button>
-    <button type="button" class="action-card" id="receiveCard"><span class="action-icon">⇩</span><span class="action-title">Receive Files</span><span class="action-desc">दूसरे डिवाइस से फाइल लें</span></button>
-  </div>
-  <section class="scan-section">
-    <div class="scan-icon" aria-hidden="true">▦</div>
-    <div class="scan-title">Scan QR to Connect</div>
-    <div class="scan-desc">QR स्कैन करके दोनों डिवाइस कनेक्ट करें</div>
-    <button id="scanBtn" type="button" class="secondary">Scan QR Code</button>
-  </section>
-  <section class="details" id="connectDetails">
-    <h2>Connect your devices</h2>
-    <p class="sub">एक डिवाइस पर नया room बनाएं, दूसरे डिवाइस पर QR स्कैन करें या room code डालें।</p>
-    <div class="row"><button id="createBtn">Create new room</button><input id="roomInput" type="text" maxlength="40" placeholder="Enter room code" aria-label="Enter room code"><button id="joinBtn" class="secondary">Join room</button></div>
-    <div id="qr-reader" style="display:none;max-width:360px;margin:12px auto"></div>
-    <div id="qr"></div>
-    <div id="roomLabel" class="status" role="status">Not connected to a room yet.</div>
-    <p class="hint">Keep both devices on this page while connecting.</p>
-  </section>
-  <section class="details" id="sendDetails">
-    <h2>Send a file</h2>
-    <input id="fileInput" type="file" aria-label="Choose a file to send">
-    <div class="row" style="margin-top:10px"><button id="sendBtn" disabled>Send selected file</button><button id="cancelBtn" class="secondary" disabled>Disconnect</button></div>
-    <progress id="progress" value="0" max="100" hidden></progress>
-    <p id="transferStatus" class="sub">Connect both devices, then choose a file.</p>
-    <p class="hint">No fixed app-level file-size limit, but very large transfers can fail if browser memory runs out.</p>
-  </section>
-  <section class="details" id="receiveDetails">
-    <h2>Received files</h2>
-    <p class="sub">Received files appear here after the transfer finishes. Click a link to download.</p>
-    <ul id="fileList"><li class="sub" id="emptyFiles">No files received yet.</li></ul>
-  </section>
-  <div class="privacy"><b>Privacy:</b> Files use an encrypted WebRTC connection when a direct route is available. Some networks may require a TURN relay. Avoid confidential files until this beta has been tested carefully.</div>
-</main>
-<footer>MAHI BLOGGER · MAHI SHARE · Free beta</footer>
+<div class="actions">
+<button type="button" class="action-card" id="sendCard"><span class="action-icon">⇧</span><span class="action-title">Send Files</span><span class="action-desc">PC या Phone से फाइल भेजें</span></button>
+<button type="button" class="action-card" id="receiveCard"><span class="action-icon">⇩</span><span class="action-title">Receive Files</span><span class="action-desc">दूसरे डिवाइस से फाइल लें</span></button>
+</div>
+<section class="scan-section"><div class="scan-icon" aria-hidden="true">▦</div><div class="scan-title">Scan QR to Connect</div><div class="scan-desc">QR स्कैन करके दोनों डिवाइस कनेक्ट करें</div><button id="scanBtn" type="button" class="secondary">Scan QR Code</button></section>
+<section class="details" id="connectDetails">
+<h2>Connect your devices</h2><p class="sub">एक डिवाइस पर नया room बनाएं, दूसरे डिवाइस पर QR स्कैन करें या room code डालें।</p>
+<div class="row"><button id="createBtn">Create new room</button><input id="roomInput" type="text" maxlength="40" placeholder="Enter room code" aria-label="Enter room code"><button id="joinBtn" class="secondary">Join room</button></div>
+<div id="qr-reader" style="display:none;max-width:360px;margin:12px auto"></div><div id="qr"></div><div id="roomLabel" class="status" role="status">Not connected to a room yet.</div><p class="hint">Keep both devices on this page while connecting.</p>
+</section>
+<section class="details" id="sendDetails">
+<h2>Send a file (maximum 10 GB)</h2><input id="fileInput" type="file" aria-label="Choose a file to send">
+<div class="row" style="margin-top:10px"><button id="sendBtn" disabled>Send selected file</button><button id="cancelBtn" class="secondary" disabled>Disconnect</button></div>
+<progress id="progress" value="0" max="100" hidden></progress><p id="transferStatus" class="sub">Connect both devices, then choose a file.</p><p class="hint">10 GB is a software limit, not a guarantee. Browser support, storage, device memory and network quality still matter.</p>
+</section>
+<section class="details" id="receiveDetails">
+<h2>Received files</h2><p class="sub">For large files, choose a save location before the sender starts. Supported desktop Chrome/Edge browsers can write directly to disk.</p>
+<button id="chooseSaveBtn" type="button">Choose Save Location</button><p id="saveStatus" class="sub">No save location selected.</p>
+<ul id="fileList"><li class="sub" id="emptyFiles">No files received yet.</li></ul>
+</section>
+<div class="privacy"><b>Privacy:</b> Files are sent over an encrypted WebRTC data channel when a direct route is available. This page uses a signaling server to connect devices; a TURN relay may be needed on some networks. Avoid confidential files until you have tested the service.</div>
+</main><footer>MAHI BLOGGER · MAHI SHARE · Free beta</footer>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
   const roomInput=$("roomInput"), roomLabel=$("roomLabel"), transferStatus=$("transferStatus");
   const createBtn=$("createBtn"), joinBtn=$("joinBtn"), sendBtn=$("sendBtn"), cancelBtn=$("cancelBtn"), scanBtn=$("scanBtn");
-  let qrScanner=null, scanning=false;
-  let ws=null, room="", initiator=false, pc=null, dc=null, joined=false, peerReady=false;
-  let receiveMeta=null, receiveChunks=[], receiveBytes=0, sendBusy=false;
+  const MAX_FILE_SIZE=10*1024*1024*1024;
   const CHUNK=16*1024;
+  let qrScanner=null, scanning=false, ws=null, room="", initiator=false, pc=null, dc=null, joined=false, peerReady=false;
+  let receiveMeta=null, receiveChunks=[], receiveBytes=0, sendBusy=false;
+  let saveHandle=null, fileWriter=null, writeQueue=Promise.resolve(), pendingReady=null;
   function status(s){roomLabel.textContent=s}
   function transfer(s){transferStatus.textContent=s}
-  function setSend(){sendBtn.disabled=!(dc && dc.readyState==="open" && $("fileInput").files[0] && !sendBusy)}
+  function setSend(){const f=$("fileInput").files[0];sendBtn.disabled=!(dc&&dc.readyState==="open"&&f&&!sendBusy)}
   function randomRoom(){return Math.random().toString(36).slice(2,8).toUpperCase()+Math.random().toString(36).slice(2,5).toUpperCase()}
   function wsUrl(){return (location.protocol==="https:"?"wss://":"ws://")+location.host}
-  function showQr(){
-    $("qr").innerHTML="";
-    const link=new URL(location.href); link.searchParams.set("room",room);
-    if(window.QRCode) new QRCode($("qr"),{text:link.toString(),width:180,height:180});
-    else $("qr").textContent="QR library unavailable. Share this room link: "+link.toString();
-    roomInput.value=room;
-  }
-  function signal(msg){if(ws && ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify(msg))}
-  function cleanup(){
-    joined=false;peerReady=false;sendBusy=false;receiveMeta=null;receiveChunks=[];receiveBytes=0;
-    if(dc){try{dc.close()}catch{} dc=null}
-    if(pc){try{pc.close()}catch{} pc=null}
-    if(ws){try{ws.close()}catch{} ws=null}
-    setSend();cancelBtn.disabled=true;
-  }
+  function showQr(){ $("qr").innerHTML=""; const link=new URL(location.href);link.searchParams.set("room",room);if(window.QRCode)new QRCode($("qr"),{text:link.toString(),width:180,height:180});else $("qr").textContent="QR library unavailable. Share this room link: "+link.toString();roomInput.value=room }
+  function signal(msg){if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(msg))}
+  function cleanup(){joined=false;peerReady=false;sendBusy=false;receiveMeta=null;receiveChunks=[];receiveBytes=0;fileWriter=null;writeQueue=Promise.resolve();if(pendingReady){pendingReady.reject(new Error("Disconnected"));pendingReady=null}if(dc){try{dc.close()}catch{}dc=null}if(pc){try{pc.close()}catch{}pc=null}if(ws){try{ws.close()}catch{}ws=null}setSend();cancelBtn.disabled=true}
   function connectToRoom(code){
-    cleanup(); room=code.trim().replace(/[^a-zA-Z0-9_-]/g,"").slice(0,40);
-    if(!room){status("Please enter a valid room code.");return}
-    status("Connecting to signaling server…");
-    ws=new WebSocket(wsUrl());
+    cleanup();room=code.trim().replace(/[^a-zA-Z0-9_-]/g,"").slice(0,40);if(!room){status("Please enter a valid room code.");return}
+    status("Connecting to signaling server…");ws=new WebSocket(wsUrl());
     ws.onopen=()=>signal({type:"join",room});
-    ws.onmessage=async ev=>{
-      let m;try{m=JSON.parse(ev.data)}catch{return}
-      if(m.type==="joined"){
-        joined=true;initiator=!!m.initiator; room=m.room; showQr();
-        status("Room "+room+" ready. "+(initiator?"Waiting for the other device…":"Joined room; waiting for host…"));
-        cancelBtn.disabled=false;
-      } else if(m.type==="peer-ready"){
-        peerReady=true; status("Other device found. Establishing secure connection…");
-        if(initiator) await createPeer(true);
-      } else if(m.type==="offer"){
-        await createPeer(false);
-        await pc.setRemoteDescription(m.description);
-        const answer=await pc.createAnswer(); await pc.setLocalDescription(answer);
-        signal({type:"answer",description:pc.localDescription});
-      } else if(m.type==="answer" && pc){
-        await pc.setRemoteDescription(m.description);
-      } else if(m.type==="candidate" && pc){
-        try{await pc.addIceCandidate(m.candidate)}catch(e){console.warn(e)}
-      } else if(m.type==="peer-left"){
-        status("The other device disconnected. Keep this room open or create a new room.");
-        peerReady=false; if(dc){try{dc.close()}catch{}} dc=null; setSend();
-      } else if(m.type==="error"){status(m.message)}
+    ws.onmessage=async ev=>{let m;try{m=JSON.parse(ev.data)}catch{return}
+      try{
+        if(m.type==="joined"){joined=true;initiator=!!m.initiator;room=m.room;showQr();status("Room "+room+" ready. "+(initiator?"Waiting for the other device…":"Joined room; waiting for host…"));cancelBtn.disabled=false}
+        else if(m.type==="peer-ready"){peerReady=true;status("Other device found. Establishing secure connection…");if(initiator)await createPeer(true)}
+        else if(m.type==="offer"){await createPeer(false);await pc.setRemoteDescription(m.description);const answer=await pc.createAnswer();await pc.setLocalDescription(answer);signal({type:"answer",description:pc.localDescription})}
+        else if(m.type==="answer"&&pc){await pc.setRemoteDescription(m.description)}
+        else if(m.type==="candidate"&&pc){try{await pc.addIceCandidate(m.candidate)}catch(e){console.warn(e)}}
+        else if(m.type==="peer-left"){status("The other device disconnected. Keep this room open or create a new room.");peerReady=false;if(dc){try{dc.close()}catch{}}dc=null;setSend()}
+        else if(m.type==="error"){status(m.message)}
+      }catch(e){status("Connection error: "+e.message)}
     };
     ws.onerror=()=>status("Could not reach the signaling server. Check the hosted URL and try again.");
     ws.onclose=()=>{if(joined)status("Signaling connection closed. Reconnect by creating/joining a room again.")};
   }
   async function createPeer(makeOffer){
     if(pc)return;
-    pc=new RTCPeerConnection({iceServers:[
-      {urls:"stun:stun.l.google.com:19302"},
-      {urls:"stun:stun1.l.google.com:19302"}
-    ]});
+    pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}]});
     pc.onicecandidate=e=>{if(e.candidate)signal({type:"candidate",candidate:e.candidate})};
-    pc.onconnectionstatechange=()=>{
-      if(pc && pc.connectionState==="connected"){status("Connected! Select a file to send.");transfer("Secure device connection established.");setSend()}
-      else if(pc && ["failed","disconnected","closed"].includes(pc.connectionState)){status("Connection "+pc.connectionState+". Try again; some networks need a TURN relay.");setSend()}
-    };
-    if(makeOffer){
-      dc=pc.createDataChannel("file-transfer");
-      setupChannel();
-      const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
-      signal({type:"offer",description:pc.localDescription});
-    } else {
-      pc.ondatachannel=e=>{dc=e.channel;setupChannel()};
-    }
+    pc.onconnectionstatechange=()=>{if(pc&&pc.connectionState==="connected"){status("Connected! Select a file to send.");transfer("Secure device connection established.");setSend()}else if(pc&&["failed","disconnected","closed"].includes(pc.connectionState)){status("Connection "+pc.connectionState+". Try again; some networks need a TURN relay.");setSend()}};
+    if(makeOffer){dc=pc.createDataChannel("file-transfer");setupChannel();const offer=await pc.createOffer();await pc.setLocalDescription(offer);signal({type:"offer",description:pc.localDescription})}
+    else pc.ondatachannel=e=>{dc=e.channel;setupChannel()};
   }
   function setupChannel(){
     dc.binaryType="arraybuffer";
@@ -151,63 +100,62 @@ button{border:0;border-radius:8px;background:var(--blue);color:white;padding:10p
     dc.onmessage=e=>{
       if(typeof e.data==="string"){
         let m;try{m=JSON.parse(e.data)}catch{return}
-        if(m.kind==="meta"){receiveMeta=m;receiveChunks=[];receiveBytes=0;transfer("Receiving "+m.name+"…")}
-        else if(m.kind==="end" && receiveMeta){
-          const blob=new Blob(receiveChunks,{type:receiveMeta.type||"application/octet-stream"});
-          const url=URL.createObjectURL(blob), li=document.createElement("li"), a=document.createElement("a");
-          a.href=url;a.download=receiveMeta.name||"received-file";a.textContent="Download "+a.download;
-          li.appendChild(a);const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").prepend(li);
-          transfer("Received "+receiveMeta.name+" successfully.");
-          receiveMeta=null;receiveChunks=[];receiveBytes=0;
+        if(m.kind==="ready"&&pendingReady){pendingReady.resolve();pendingReady=null}
+        else if(m.kind==="error"){if(pendingReady){pendingReady.reject(new Error(m.message));pendingReady=null}transfer(m.message)}
+        else if(m.kind==="meta"){
+          receiveMeta=m;receiveChunks=[];receiveBytes=0;writeQueue=Promise.resolve();
+          if(!saveHandle){dc.send(JSON.stringify({kind:"error",message:"Receiver must click Choose Save Location before receiving large files."}));receiveMeta=null;return}
+          transfer("Preparing to receive "+m.name+"…");
+          writeQueue=saveHandle.createWritable().then(w=>{fileWriter=w;dc.send(JSON.stringify({kind:"ready"}));transfer("Receiving "+m.name+"…")}).catch(err=>{receiveMeta=null;dc.send(JSON.stringify({kind:"error",message:"Could not open save file: "+err.message}));transfer("Could not open save file.")});
+        } else if(m.kind==="end"&&receiveMeta){
+          const meta=receiveMeta;
+          writeQueue=writeQueue.then(async()=>{if(fileWriter){await fileWriter.close();fileWriter=null}const li=document.createElement("li"),span=document.createElement("span");span.textContent="Saved: "+(meta.name||"received-file");li.appendChild(span);const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").prepend(li);transfer("Received and saved "+meta.name+" successfully.");$("saveStatus").textContent="Last saved: "+meta.name;receiveMeta=null;receiveBytes=0;receiveChunks=[];saveHandle=null}).catch(err=>{transfer("Saving failed: "+err.message);receiveMeta=null;fileWriter=null});
         }
       } else if(receiveMeta){
-        receiveChunks.push(e.data);receiveBytes+=e.data.byteLength||e.data.size||0;
-        if(receiveMeta.size) transfer("Receiving "+receiveMeta.name+" — "+Math.min(100,Math.round(receiveBytes/receiveMeta.size*100))+"%");
+        const chunk=e.data;receiveBytes+=chunk.byteLength||chunk.size||0;
+        writeQueue=writeQueue.then(async()=>{if(!fileWriter)throw new Error("Save file is not ready");await fileWriter.write(chunk);if(receiveMeta&&receiveMeta.size)transfer("Receiving "+receiveMeta.name+" — "+Math.min(100,Math.round(receiveBytes/receiveMeta.size*100))+"%")}).catch(err=>{transfer("Disk write failed: "+err.message);try{if(fileWriter)fileWriter.abort()}catch{}fileWriter=null});
       }
     };
   }
-  const openDetails=id=>$(id).classList.toggle("open");
-  $("sendCard").onclick=()=>{openDetails("sendDetails");$("connectDetails").classList.add("open")};
-  $("receiveCard").onclick=()=>{openDetails("receiveDetails");$("connectDetails").classList.add("open")};
+  const toggleDetails=id=>$(id).classList.toggle("open");
+  $("sendCard").onclick=()=>{toggleDetails("sendDetails");$("connectDetails").classList.add("open")};
+  $("receiveCard").onclick=()=>{toggleDetails("receiveDetails");$("connectDetails").classList.add("open")};
   document.querySelector(".scan-section").addEventListener("click",e=>{if(e.target.id!=="scanBtn")$("connectDetails").classList.add("open")});
-  scanBtn.onclick=async()=>{
-    $("connectDetails").classList.add("open");
-    const box=$("qr-reader");
-    if(scanning && qrScanner){try{await qrScanner.stop();await qrScanner.clear()}catch(e){} qrScanner=null;scanning=false;box.style.display="none";scanBtn.textContent="Scan QR Code";return;}
-    if(!window.Html5Qrcode){status("QR scanner could not load. Enter the room code manually.");return;}
-    box.style.display="block";scanBtn.disabled=true;status("Allow camera access to scan the room QR code.");
-    try{qrScanner=new Html5Qrcode("qr-reader");await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},async decodedText=>{let code=decodedText;try{const u=new URL(decodedText);code=u.searchParams.get("room")||decodedText}catch(e){}code=String(code).trim();try{await qrScanner.stop();await qrScanner.clear()}catch(e){}qrScanner=null;scanning=false;box.style.display="none";scanBtn.disabled=false;scanBtn.textContent="Scan QR Code";roomInput.value=code;connectToRoom(code);},()=>{});scanning=true;scanBtn.textContent="Stop Scanner";}catch(e){status("Could not start camera. Allow camera permission or enter the room code manually.");if(qrScanner){try{await qrScanner.clear()}catch(err){}}qrScanner=null;scanning=false;box.style.display="none";}finally{scanBtn.disabled=false;}
+  $("chooseSaveBtn").onclick=async()=>{
+    if(!window.showSaveFilePicker){$("saveStatus").textContent="Direct-to-disk receiving requires a supported desktop Chrome/Edge browser on HTTPS or localhost.";return}
+    try{saveHandle=await window.showSaveFilePicker({suggestedName:"received-file"});$("saveStatus").textContent="Save location selected. Keep this page open until transfer finishes."}
+    catch(e){if(e.name!=="AbortError")$("saveStatus").textContent="Could not select save location: "+e.message}
   };
-  createBtn.onclick=()=>connectToRoom(randomRoom());
-  joinBtn.onclick=()=>connectToRoom(roomInput.value);
-  $("fileInput").onchange=setSend;
+  scanBtn.onclick=async()=>{
+    $("connectDetails").classList.add("open");const box=$("qr-reader");
+    if(scanning&&qrScanner){try{await qrScanner.stop();await qrScanner.clear()}catch(e){}qrScanner=null;scanning=false;box.style.display="none";scanBtn.textContent="Scan QR Code";return}
+    if(!window.Html5Qrcode){status("QR scanner could not load. Enter the room code manually.");return}
+    box.style.display="block";scanBtn.disabled=true;status("Allow camera access to scan the room QR code.");
+    try{qrScanner=new Html5Qrcode("qr-reader");await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},async decodedText=>{let code=decodedText;try{const u=new URL(decodedText);code=u.searchParams.get("room")||decodedText}catch(e){}code=String(code).trim();try{await qrScanner.stop();await qrScanner.clear()}catch(e){}qrScanner=null;scanning=false;box.style.display="none";scanBtn.disabled=false;scanBtn.textContent="Scan QR Code";roomInput.value=code;connectToRoom(code)},()=>{});scanning=true;scanBtn.textContent="Stop Scanner"}
+    catch(e){status("Could not start camera. Allow camera permission or enter the room code manually.");if(qrScanner){try{await qrScanner.clear()}catch(err){}}qrScanner=null;scanning=false;box.style.display="none"}
+    finally{scanBtn.disabled=false}
+  };
+  createBtn.onclick=()=>connectToRoom(randomRoom());joinBtn.onclick=()=>connectToRoom(roomInput.value);$("fileInput").onchange=setSend;
   sendBtn.onclick=async()=>{
-    const file=$("fileInput").files[0];
-    if(!file||!dc||dc.readyState!=="open")return;
-    if(file.size>1024*1024*1024){
-      const proceed=confirm("This file is larger than 1 GB. Large transfers can fail or use substantial memory on the receiving device. Continue anyway?");
-      if(!proceed)return;
-    }
-    sendBusy=true;setSend();$("progress").hidden=false;$("progress").value=0;
-    transfer("Preparing "+file.name+"…");
+    const file=$("fileInput").files[0];if(!file||!dc||dc.readyState!=="open")return;
+    if(file.size>MAX_FILE_SIZE){alert("Maximum file size is 10 GB (10 GiB).");return}
+    if(!confirm("Send "+file.name+" ("+(file.size/1024/1024/1024).toFixed(2)+" GB)? Keep both devices awake until complete."))return;
+    sendBusy=true;setSend();$("progress").hidden=false;$("progress").value=0;transfer("Preparing "+file.name+"…");
     try{
       dc.send(JSON.stringify({kind:"meta",name:file.name,size:file.size,type:file.type||"application/octet-stream"}));
+      await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{if(pendingReady){pendingReady=null;reject(new Error("Receiver did not prepare a save location in time"))}},60000);pendingReady={resolve:()=>{clearTimeout(timeout);resolve()},reject:e=>{clearTimeout(timeout);reject(e)}}});
       let offset=0;
       while(offset<file.size){
         if(!dc||dc.readyState!=="open")throw new Error("Connection closed");
-        if(dc.bufferedAmount>4*1024*1024) await new Promise(resolve=>{const poll=()=>dc.bufferedAmount<=1024*1024?resolve():setTimeout(poll,80);poll()});
-        const chunk=file.slice(offset,offset+CHUNK);
-        dc.send(await chunk.arrayBuffer());offset+=chunk.size;
-        $("progress").value=file.size?Math.round(offset/file.size*100):100;
-        transfer("Sending "+file.name+" — "+$("progress").value+"%");
+        if(dc.bufferedAmount>4*1024*1024)await new Promise((resolve,reject)=>{const poll=()=>{if(!dc||dc.readyState!=="open"){reject(new Error("Connection closed"));return}if(dc.bufferedAmount<=1024*1024)resolve();else setTimeout(poll,80)};poll()});
+        const chunk=file.slice(offset,offset+CHUNK);dc.send(await chunk.arrayBuffer());offset+=chunk.size;$("progress").value=file.size?Math.round(offset/file.size*100):100;transfer("Sending "+file.name+" — "+$("progress").value+"%");
       }
-      dc.send(JSON.stringify({kind:"end"}));transfer("File sent. Ask the other device to click its download link.");
+      dc.send(JSON.stringify({kind:"end"}));transfer("File sent. Waiting for the receiver to finish saving.");
     }catch(e){transfer("Transfer interrupted: "+e.message)}
     sendBusy=false;setSend();
   };
   cancelBtn.onclick=()=>{signal({type:"hangup"});cleanup();status("Disconnected.");transfer("Ready when you are.");$("qr").innerHTML=""};
-  const q=new URLSearchParams(location.search).get("room");
-  if(q){$("connectDetails").classList.add("open");roomInput.value=q;connectToRoom(q)}
+  const q=new URLSearchParams(location.search).get("room");if(q){$("connectDetails").classList.add("open");roomInput.value=q;connectToRoom(q)}
 })();
 </script>
 </body>
