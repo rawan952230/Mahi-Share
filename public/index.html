@@ -54,9 +54,10 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   const roomInput=$("roomInput"), roomLabel=$("roomLabel"), transferStatus=$("transferStatus");
   const createBtn=$("createBtn"), joinBtn=$("joinBtn"), sendBtn=$("sendBtn"), cancelBtn=$("cancelBtn"), scanBtn=$("scanBtn");
   const MAX_FILE_SIZE=10*1024*1024*1024;
-  const CHUNK=16*1024;
+  const CHUNK=32*1024;
+  const ACK_INTERVAL=1024*1024;
   let qrScanner=null, scanning=false, ws=null, room="", initiator=false, pc=null, dc=null, joined=false, peerReady=false;
-  let receiveMeta=null, receiveChunks=[], receiveBytes=0, sendBusy=false;
+  let receiveMeta=null, receiveBytes=0, sendBusy=false, sendAckWaiter=null;
   let saveHandle=null, fileWriter=null, writeQueue=Promise.resolve(), pendingReady=null;
   function status(s){roomLabel.textContent=s}
   function transfer(s){transferStatus.textContent=s}
@@ -65,7 +66,7 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
   function wsUrl(){return (location.protocol==="https:"?"wss://":"ws://")+location.host}
   function showQr(){ $("qr").innerHTML=""; const link=new URL(location.href);link.searchParams.set("room",room);if(window.QRCode)new QRCode($("qr"),{text:link.toString(),width:180,height:180});else $("qr").textContent="QR library unavailable. Share this room link: "+link.toString();roomInput.value=room }
   function signal(msg){if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(msg))}
-  function cleanup(){joined=false;peerReady=false;sendBusy=false;receiveMeta=null;receiveChunks=[];receiveBytes=0;fileWriter=null;writeQueue=Promise.resolve();if(pendingReady){pendingReady.reject(new Error("Disconnected"));pendingReady=null}if(dc){try{dc.close()}catch{}dc=null}if(pc){try{pc.close()}catch{}pc=null}if(ws){try{ws.close()}catch{}ws=null}setSend();cancelBtn.disabled=true}
+  function cleanup(){joined=false;peerReady=false;sendBusy=false;receiveMeta=null;receiveBytes=0;fileWriter=null;writeQueue=Promise.resolve();if(pendingReady){pendingReady.reject(new Error("Disconnected"));pendingReady=null}if(sendAckWaiter){clearTimeout(sendAckWaiter.timer);sendAckWaiter.reject(new Error("Disconnected"));sendAckWaiter=null}if(dc){try{dc.close()}catch{}dc=null}if(pc){try{pc.close()}catch{}pc=null}if(ws){try{ws.close()}catch{}ws=null}setSend();cancelBtn.disabled=true}
   function connectToRoom(code){
     cleanup();room=code.trim().replace(/[^a-zA-Z0-9_-]/g,"").slice(0,40);if(!room){status("Please enter a valid room code.");return}
     status("Connecting to signaling server…");ws=new WebSocket(wsUrl());
@@ -101,19 +102,35 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
       if(typeof e.data==="string"){
         let m;try{m=JSON.parse(e.data)}catch{return}
         if(m.kind==="ready"&&pendingReady){pendingReady.resolve();pendingReady=null}
-        else if(m.kind==="error"){if(pendingReady){pendingReady.reject(new Error(m.message));pendingReady=null}transfer(m.message)}
+        else if(m.kind==="ack"&&sendAckWaiter&&Number(m.bytes)>=sendAckWaiter.target){clearTimeout(sendAckWaiter.timer);sendAckWaiter.resolve();sendAckWaiter=null}
+        else if(m.kind==="error"){if(pendingReady){pendingReady.reject(new Error(m.message));pendingReady=null}if(sendAckWaiter){clearTimeout(sendAckWaiter.timer);sendAckWaiter.reject(new Error(m.message));sendAckWaiter=null}transfer(m.message)}
         else if(m.kind==="meta"){
-          receiveMeta=m;receiveChunks=[];receiveBytes=0;writeQueue=Promise.resolve();
+          receiveMeta=m;receiveBytes=0;writeQueue=Promise.resolve();
           if(!saveHandle){dc.send(JSON.stringify({kind:"error",message:"Receiver must click Choose Save Location before receiving large files."}));receiveMeta=null;return}
           transfer("Preparing to receive "+m.name+"…");
           writeQueue=saveHandle.createWritable().then(w=>{fileWriter=w;dc.send(JSON.stringify({kind:"ready"}));transfer("Receiving "+m.name+"…")}).catch(err=>{receiveMeta=null;dc.send(JSON.stringify({kind:"error",message:"Could not open save file: "+err.message}));transfer("Could not open save file.")});
         } else if(m.kind==="end"&&receiveMeta){
           const meta=receiveMeta;
-          writeQueue=writeQueue.then(async()=>{if(fileWriter){await fileWriter.close();fileWriter=null}const li=document.createElement("li"),span=document.createElement("span");span.textContent="Saved: "+(meta.name||"received-file");li.appendChild(span);const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").prepend(li);transfer("Received and saved "+meta.name+" successfully.");$("saveStatus").textContent="Last saved: "+meta.name;receiveMeta=null;receiveBytes=0;receiveChunks=[];saveHandle=null}).catch(err=>{transfer("Saving failed: "+err.message);receiveMeta=null;fileWriter=null});
+          writeQueue=writeQueue.then(async()=>{if(fileWriter){await fileWriter.close();fileWriter=null}const li=document.createElement("li"),span=document.createElement("span");span.textContent="Saved: "+(meta.name||"received-file");li.appendChild(span);const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").prepend(li);transfer("Received and saved "+meta.name+" successfully.");$("saveStatus").textContent="Last saved: "+meta.name;receiveMeta=null;receiveBytes=0;saveHandle=null}).catch(err=>{transfer("Saving failed: "+err.message);receiveMeta=null;fileWriter=null});
         }
       } else if(receiveMeta){
-        const chunk=e.data;receiveBytes+=chunk.byteLength||chunk.size||0;
-        writeQueue=writeQueue.then(async()=>{if(!fileWriter)throw new Error("Save file is not ready");await fileWriter.write(chunk);if(receiveMeta&&receiveMeta.size)transfer("Receiving "+receiveMeta.name+" — "+Math.min(100,Math.round(receiveBytes/receiveMeta.size*100))+"%")}).catch(err=>{transfer("Disk write failed: "+err.message);try{if(fileWriter)fileWriter.abort()}catch{}fileWriter=null});
+        const chunk=e.data;
+        const chunkSize=chunk.byteLength||chunk.size||0;
+        receiveBytes+=chunkSize;
+        const writtenBytes=receiveBytes;
+        const shouldAck=(writtenBytes%ACK_INTERVAL===0)||(writtenBytes===receiveMeta.size);
+        const metaAtReceipt=receiveMeta;
+        writeQueue=writeQueue.then(async()=>{
+          if(!fileWriter)throw new Error("Save file is not ready");
+          await fileWriter.write(chunk);
+          transfer("Receiving "+metaAtReceipt.name+" — "+Math.min(100,Math.round(writtenBytes/metaAtReceipt.size*100))+"%");
+          if(shouldAck&&dc&&dc.readyState==="open")dc.send(JSON.stringify({kind:"ack",bytes:writtenBytes}));
+        }).catch(err=>{
+          transfer("Disk write failed: "+err.message);
+          try{if(fileWriter)fileWriter.abort()}catch{}
+          fileWriter=null;
+          if(dc&&dc.readyState==="open")dc.send(JSON.stringify({kind:"error",message:"Disk write failed: "+err.message}));
+        });
       }
     };
   }
@@ -160,10 +177,28 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
       let offset=0;
       while(offset<file.size){
         if(!dc||dc.readyState!=="open")throw new Error("Connection closed");
-        if(dc.bufferedAmount>4*1024*1024)await new Promise((resolve,reject)=>{const poll=()=>{if(!dc||dc.readyState!=="open"){reject(new Error("Connection closed"));return}if(dc.bufferedAmount<=1024*1024)resolve();else setTimeout(poll,80)};poll()});
-        const chunk=file.slice(offset,offset+CHUNK);dc.send(await chunk.arrayBuffer());offset+=chunk.size;$("progress").value=file.size?Math.round(offset/file.size*100):100;transfer("Sending "+file.name+" — "+$("progress").value+"%");
+        const batchEnd=Math.min(offset+ACK_INTERVAL,file.size);
+        const ackPromise=new Promise((resolve,reject)=>{
+          const timer=setTimeout(()=>{
+            if(sendAckWaiter&&sendAckWaiter.target===batchEnd){
+              sendAckWaiter=null;
+              reject(new Error("Receiver did not confirm disk write in time"));
+            }
+          },120000);
+          sendAckWaiter={target:batchEnd,resolve,reject,timer};
+        });
+        while(offset<batchEnd){
+          if(!dc||dc.readyState!=="open")throw new Error("Connection closed");
+          if(dc.bufferedAmount>4*1024*1024)await new Promise((resolve,reject)=>{const poll=()=>{if(!dc||dc.readyState!=="open"){reject(new Error("Connection closed"));return}if(dc.bufferedAmount<=1024*1024)resolve();else setTimeout(poll,80)};poll()});
+          const chunk=file.slice(offset,Math.min(offset+CHUNK,batchEnd));
+          dc.send(await chunk.arrayBuffer());
+          offset+=chunk.size;
+          $("progress").value=file.size?Math.round(offset/file.size*100):100;
+          transfer("Sending "+file.name+" — "+$("progress").value+"%");
+        }
+        await ackPromise;
       }
-      dc.send(JSON.stringify({kind:"end"}));transfer("File sent. Waiting for the receiver to finish saving.");
+      dc.send(JSON.stringify({kind:"end"}));transfer("All data sent. Waiting for the receiver to finish saving.");
     }catch(e){transfer("Transfer interrupted: "+e.message)}
     sendBusy=false;setSend();
   };
