@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAHI SHARE — Fast, Simple & Secure File Transfer</title>
+<meta name="description" content="MAHI SHARE helps you transfer files and folders between your phone and computer using a simple QR-based connection. Free browser-based file sharing tool.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://mahi-share.onrender.com/">
+<style>
+:root{--navy:#06365f;--blue:#087bd3;--yellow:#ffd447;--ink:#171717;--muted:#666;--line:#dedede}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font:15px/1.45 Arial,Helvetica,sans-serif}
+button,input{font:inherit}.page{max-width:780px;margin:20px auto 10px;padding:12px 12px 18px;border:1px solid #dedede;border-radius:17px;background:#fff}
+header{background:var(--navy);color:#fff;text-align:center;border-radius:12px;padding:17px 12px 18px;margin-bottom:12px}
+.brand-icon{font-size:23px;line-height:1.2;margin-bottom:8px}.brand{font-size:21px;font-weight:800;margin:0}.tagline{font-size:14px;margin:8px 0 11px;color:#f2f6fb}.devices{display:flex;justify-content:center;align-items:center;gap:12px;font-size:18px}.devices .arrows{color:var(--yellow);font-size:22px;font-weight:bold}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-card{min-height:108px;border:1px solid var(--line);border-radius:13px;background:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px 10px;cursor:pointer;color:var(--ink)}.action-card:hover{border-color:#9ebfe0;background:#fbfdff}.action-icon{font-size:20px;color:var(--blue);margin-bottom:7px;line-height:1}.action-title{font-size:15px;font-weight:700;margin-bottom:8px}.action-desc{font-size:14px;color:#666}
+.scan-section{text-align:center;padding:20px 8px 2px}.scan-icon{font-size:24px;line-height:1;margin-bottom:6px;color:#111}.scan-title{font-weight:700;font-size:15px;margin-bottom:6px}.scan-desc{font-size:14px;color:#666;margin-bottom:10px}
+button{border:0;border-radius:8px;background:var(--blue);color:white;padding:10px 14px;font-weight:700;cursor:pointer}button.secondary{background:#eef4fb;color:#174b7a}button:disabled{opacity:.45;cursor:not-allowed}
+input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-width:0;flex:1;font-size:15px;width:100%}input[type=file]{max-width:100%;width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;background:#fff}
+.details{display:none;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px}.details.open{display:block}.details h2{font-size:17px;margin:0 0 10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row button{flex:1}.row input{flex:1 1 120px}.sub{color:var(--muted);font-size:13px}.status{padding:10px 12px;border-radius:8px;background:#f0f5fb;color:#21466b;font-size:13px;overflow-wrap:anywhere;margin-top:10px}
+.pinbox{display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:#fff8dc;border:1px solid #f1dd8a;font-size:14px;overflow-wrap:anywhere}.pinbox b{font-size:18px;letter-spacing:2px}
+#qr{margin:10px 0;overflow-wrap:anywhere}#qr img,#qr canvas{max-width:100%;height:auto!important;border:6px solid white}#qr-reader{width:100%;overflow:hidden;border-radius:10px}#qr-reader video{width:100%;border-radius:10px}progress{width:100%;height:14px;margin-top:10px}#fileList{padding-left:20px}#fileList li{margin:8px 0;overflow-wrap:anywhere}.hint{font-size:12px;color:#666;margin:8px 0 0}footer{text-align:center;color:#777;font-size:12px;padding:15px 5px 2px}.privacy{font-size:12px;color:#666;margin-top:12px;padding:10px;border:1px solid #eee;border-radius:8px}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}.pick label{font-size:12px;color:#555;display:block;margin-bottom:4px}
+@media(max-width:520px){.page{margin:8px 0;padding:6px;border-radius:12px;border-left:0;border-right:0}.actions{gap:7px}.action-card{min-height:108px;padding:12px 5px}.action-title{font-size:14px}.action-desc{font-size:13px}.brand{font-size:20px}.pick{grid-template-columns:1fr}}
+footer a{color:#174b7a;text-decoration:none}footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+<header><div class="brand-icon" aria-hidden="true">➤</div><div class="brand">MAHI SHARE</div><p class="tagline">Fast • Simple • Secure File Transfer</p><div class="devices" aria-hidden="true"><span>▱</span><span class="arrows">↔</span><span>▯</span></div></header>
+<main>
+<div class="actions">
+<button type="button" class="action-card" id="sendCard"><span class="action-icon">⇧</span><span class="action-title">Send Files</span><span class="action-desc">PC या Phone से फाइल भेजें</span></button>
+<button type="button" class="action-card" id="receiveCard"><span class="action-icon">⇩</span><span class="action-title">Receive Files</span><span class="action-desc">दूसरे डिवाइस से फाइल लें</span></button>
+</div>
+<section class="scan-section"><div class="scan-icon" aria-hidden="true">▦</div><div class="scan-title">Scan QR to Connect</div><div class="scan-desc">QR स्कैन करके दोनों डिवाइस कनेक्ट करें</div><button id="scanBtn" type="button" class="secondary">Scan QR Code</button></section>
+<section class="details" id="connectDetails">
+<h2>Connect your devices</h2><p class="sub">एक डिवाइस पर नया room बनाएं (PIN अपने-आप बनेगा)। दूसरे डिवाइस पर QR स्कैन करें, या room code और PIN डालें।</p>
+<div class="row"><button id="createBtn">Create new room</button></div>
+<div class="row" style="margin-top:8px"><input id="roomInput" type="text" maxlength="40" placeholder="Room code" aria-label="Enter room code" autocapitalize="characters"><input id="pinInput" type="text" maxlength="16" placeholder="PIN" aria-label="Enter PIN" autocapitalize="characters" autocomplete="off"><button id="joinBtn" class="secondary">Join room</button></div>
+<div id="pinBox" class="pinbox"></div>
+<div id="qr-reader" style="display:none;max-width:360px;margin:12px auto"></div><div id="qr"></div><div id="roomLabel" class="status" role="status">Not connected to a room yet.</div><p class="hint">Keep both devices on this page while connecting. दोनों तरफ PIN मैच होना ज़रूरी है — गलत PIN पर कनेक्शन बंद हो जाएगा।</p>
+</section>
+<section class="details" id="sendDetails">
+<h2>Send files or a folder (max 10 GB per file)</h2><p class="sub">files/folder को सीधे page पर drag &amp; drop भी कर सकते हैं।</p>
+<div class="pick"><div><label for="fileInput">Files (एक या कई)</label><input id="fileInput" type="file" multiple aria-label="Choose files to send"></div><div><label for="folderInput">पूरा Folder</label><input id="folderInput" type="file" webkitdirectory aria-label="Choose a folder to send"></div></div>
+<p id="selInfo" class="sub">Nothing selected.</p>
+<div class="row" style="margin-top:6px"><button id="sendBtn" disabled>Send selected</button><button id="clearBtn" class="secondary" type="button">Clear</button><button id="cancelBtn" class="secondary" disabled>Disconnect</button></div>
+<progress id="progress" value="0" max="100" hidden></progress><p id="transferStatus" class="sub">Connect both devices, then choose files.</p><p class="hint">Transfer बीच में टूटे तो दोबारा connect करके वही files फिर से Send करें — जो हिस्सा receiver के folder में पहुँच चुका है वो दोबारा नहीं जाएगा (receiver ने Save Folder चुना हो तो)। Connection टूटे तो app अपने-आप दोबारा जुड़कर transfer जारी रखता है।</p>
+</section>
+<section class="details" id="receiveDetails">
+<h2>Incoming / Received files</h2><p class="sub">Desktop Chrome/Edge: एक बार <b>Save Folder</b> चुनें — हर फाइल (folder structure के साथ) अपने original नाम और extension में उसी folder में सेव होगी। बाकी browsers/phone पर (1 GB तक) फाइल original नाम से download होगी।</p>
+<button id="chooseSaveBtn" type="button">Choose Save Folder</button><p id="saveStatus" class="sub">No save folder selected.</p>
+<ul id="fileList"><li class="sub" id="emptyFiles">No files received yet.</li></ul>
+</section>
+<div class="privacy"><b>Security:</b> Files WebRTC के encrypted (DTLS) channel से जाती हैं। इसके ऊपर PIN-based verification है: PIN गलत हो या बीच में कोई तीसरा आ जाए तो connection reject होता है। Receiver को हर transfer से पहले Accept/Reject का सवाल आता है। Signaling server सिर्फ devices को जोड़ता है; कुछ networks पर TURN relay चाहिए हो सकता है।</div>
+</main><footer>
+  <div style="font-weight:700;color:#06365f;margin-bottom:8px">MAHI SHARE</div>
+  <nav aria-label="Footer navigation" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px;margin-bottom:8px">
+    <a href="/about.html">About Us</a>
+    <a href="/how-to-use.html">How to Use</a>
+    <a href="/privacy-policy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms &amp; Conditions</a>
+    <a href="/contact.html">Contact Us</a>
+  </nav>
+  <div>MAHI BLOGGER · MAHI SHARE · Free beta</div>
+</footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const roomInput=$("roomInput"), pinInput=$("pinInput"), roomLabel=$("roomLabel"), transferStatus=$("transferStatus");
+  const createBtn=$("createBtn"), joinBtn=$("joinBtn"), sendBtn=$("sendBtn"), cancelBtn=$("cancelBtn"), scanBtn=$("scanBtn");
+
+  // ---------- settings ----------
+  const P            = 6;                       // parallel WebRTC connections (lanes)
+  const SEG          = 8*1024*1024;             // resume / scheduling unit
+  const PAYLOAD      = 65536-12;                // 64 KB messages: 12-byte header + data
+  const BUF_HIGH     = 8*1024*1024;             // per-lane send buffer limit
+  const BUF_LOW      = 2*1024*1024;
+  const MAX_INFLIGHT = 12;                      // segments sent but not yet confirmed (~48 MB)
+  const MEM_LIMIT    = 1024*1024*1024;          // browsers without folder access: 1 GB max
+  const MAX_FILE_SIZE= 10*1024*1024*1024;
+  const ICE = [
+    {urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}
+    // For networks where direct connection fails, add a TURN server here:
+    // ,{urls:"turn:YOUR_TURN_HOST:3478",username:"USER",credential:"PASS"}
+  ];
+  const ALPHA="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  // ---------- state ----------
+  let qrScanner=null, scanning=false, ws=null, room="", initiator=false, joined=false, iAmCreator=false;
+  let pin="", keyPromise=null, msgChain=Promise.resolve();
+  let pcs=[], chans=[], ctl=null, dataChans=[];
+  let sess=null, userLeft=true, retry=0, retryTimer=null, connWatch=null, wantResume=false, resumeSig="", dropped=[], routeText="";
+  const waiters=new Map(), early=new Map();
+  let fileSeq=0, sendBusy=false, curSend=null;
+  const recvFiles=new Map(); let rxBatch=null, dirHandle=null;
+
+  // ---------- helpers ----------
+  const enc=new TextEncoder();
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const hex=buf=>Array.from(new Uint8Array(buf),b=>b.toString(16).padStart(2,"0")).join("");
+  const randHex=n=>hex(crypto.getRandomValues(new Uint8Array(n)));
+  const randStr=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),b=>ALPHA[b%32]).join("");
+  function fmt(b){if(b>=1073741824)return (b/1073741824).toFixed(2)+" GB";if(b>=1048576)return (b/1048576).toFixed(1)+" MB";if(b>=1024)return (b/1024).toFixed(0)+" KB";return b+" B"}
+  function status(s){roomLabel.textContent=s}
+  const BASE_TITLE=document.title;
+  function transfer(s){
+    transferStatus.textContent=s;
+    const m=/(\d+)%/.exec(s);
+    try{document.title=(m&&transferActive())?(/^Receiving/.test(s)?"⬇ ":"⬆ ")+m[1]+"% — MAHI SHARE":BASE_TITLE}catch{}
+  }
+  function wsUrl(){return (location.protocol==="https:"?"wss://":"ws://")+location.host}
+  function signal(msg){if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(msg))}
+  function ctlSend(o){if(ctl&&ctl.ch.readyState==="open")ctl.ch.send(JSON.stringify(o))}
+  function sanitizeName(n){n=String(n||"").replace(/[\\/:*?"<>|\u0000-\u001f]/g,"_").trim();if(!n||n==="."||n==="..")n="_";return n}
+  function segLen(size,i){return Math.min(SEG,size-i*SEG)}
+  function encodeRanges(set){const a=[...set].sort((x,y)=>x-y),out=[];let i=0;while(i<a.length){let j=i;while(j+1<a.length&&a[j+1]===a[j]+1)j++;out.push(i===j?""+a[i]:a[i]+"-"+a[j]);i=j+1}return out.join(",")}
+  function decodeRanges(str,max){const s=new Set();String(str||"").split(",").forEach(p=>{if(!p)return;const [a,b]=p.split("-").map(Number);const e=isNaN(b)?a:b;for(let k=a;k<=e&&k<max;k++)if(k>=0)s.add(k)});return s}
+  function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h.toString(16)}
+
+  function expect(key,ms){
+    const p=new Promise((resolve,reject)=>{
+      if(early.has(key)){const v=early.get(key);early.delete(key);return resolve(v)}
+      const t=setTimeout(()=>{waiters.delete(key);reject(new Error("Timed out waiting for "+key.split(":")[0]))},ms);
+      waiters.set(key,{resolve:v=>{clearTimeout(t);waiters.delete(key);resolve(v)},reject:e=>{clearTimeout(t);waiters.delete(key);reject(e)}});
+    });
+    p.catch(()=>{});return p;
+  }
+  function fire(key,v){const w=waiters.get(key);if(w)w.resolve(v);else early.set(key,v)}
+  function failAll(err){for(const w of [...waiters.values()])w.reject(err)}
+
+  // ---------- UI ----------
+  function getItems(){
+    const a=[...$("fileInput").files].map(f=>({file:f,path:f.name}));
+    const b=[...$("folderInput").files].map(f=>({file:f,path:f.webkitRelativePath||f.name}));
+    return a.concat(b,dropped);
+  }
+  function updateSel(){
+    const it=getItems();
+    $("selInfo").textContent=it.length?(it.length+" file(s) selected · "+fmt(it.reduce((s,x)=>s+x.file.size,0))):"Nothing selected.";
+    setSend();
+  }
+  function setSend(){sendBtn.disabled=!(ctl&&ctl.ch.readyState==="open"&&getItems().length&&!sendBusy)}
+  function showQr(){
+    $("qr").innerHTML="";
+    if(!iAmCreator)return;
+    const link=new URL(location.href);link.search="";link.hash="";link.searchParams.set("room",room);link.hash="pin="+pin;
+    if(window.QRCode)new QRCode($("qr"),{text:link.toString(),width:180,height:180});
+    roomInput.value=room;pinInput.value=pin;
+    const pb=$("pinBox");pb.style.display="block";pb.innerHTML="Room: <b>"+room+"</b> &nbsp; PIN: <b>"+pin+"</b><br><span class='sub'>दूसरे device पर QR scan करें या ये दोनों डालें।</span>";
+  }
+
+  // ---------- crypto / PIN verification ----------
+  async function deriveKey(p,r){
+    const base=await crypto.subtle.importKey("raw",enc.encode(p),"PBKDF2",false,["deriveBits"]);
+    const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:enc.encode("mahi-share|"+r),iterations:150000,hash:"SHA-256"},base,256);
+    return crypto.subtle.importKey("raw",bits,{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  }
+  const fpOf=sdp=>((sdp||"").match(/a=fingerprint:(\S+\s+\S+)/)||[])[1]||"";
+  async function proofFor(w,role){
+    const pc=w.entry.pc;
+    const l=fpOf(pc.localDescription&&pc.localDescription.sdp), r=fpOf(pc.remoteDescription&&pc.remoteDescription.sdp);
+    if(!l||!r)throw new Error("Missing DTLS fingerprint");
+    const nI=initiator?w.myNonce:w.peerNonce, nR=initiator?w.peerNonce:w.myNonce;
+    const fI=initiator?l:r, fR=initiator?r:l;
+    const key=await keyPromise;
+    return hex(await crypto.subtle.sign("HMAC",key,enc.encode(["mahi1",role,w.label,nI,nR,fI,fR].join("|"))));
+  }
+  async function sendAuth(w){
+    if(w.sentAuth)return;w.sentAuth=true;
+    const p=await proofFor(w,initiator?"I":"R");
+    if(w.ch.readyState==="open")w.ch.send(JSON.stringify({k:"auth",p}));
+  }
+  async function verifyAuth(w,p){
+    let ok=false;
+    try{const exp=await proofFor(w,initiator?"R":"I");ok=(typeof p==="string"&&p===exp)}catch{}
+    if(ok){w.authed=true;onAuthed(w)}
+    else{status("❌ PIN match नहीं हुआ या device verify नहीं हुआ — connection बंद किया गया।");resetPeers()}
+  }
+  function onAuthed(w){
+    if(w.label==="ctl"){ctl=w;retry=0;clearTimeout(retryTimer);clearTimeout(connWatch);transfer("Secure connection ready.");setTimeout(showRoute,2500)}
+    else if(!dataChans.includes(w))dataChans.push(w);
+    if(ctl)status("✅ Connected & verified · "+dataChans.length+"/"+P+" fast lanes ready"+routeText);
+    setSend();
+    if(w.label==="ctl"&&wantResume&&!sendBusy)setTimeout(()=>{if(wantResume&&!sendBusy&&ctl)startSend(true)},800);
+  }
+
+  // ---------- signaling / connections ----------
+  function resetPeers(){
+    abortSend("Connection lost");
+    abortReceives();
+    for(const w of chans){try{w.ch.onclose=null;w.ch.close()}catch{}}
+    for(const e of pcs){if(e){try{e.pc.close()}catch{}}}
+    pcs=[];chans=[];ctl=null;dataChans=[];early.clear();
+    setSend();
+  }
+  function cleanup(){
+    joined=false;resetPeers();
+    if(ws){const s=ws;ws=null;try{s.close()}catch{}}
+    cancelBtn.disabled=true;
+  }
+  function connectToRoom(code,pinValue,creator,auto){
+    cleanup();
+    if(!window.crypto||!crypto.subtle){status("Secure transfer के लिए page HTTPS पर खोलें।");return}
+    room=code.trim().replace(/[^a-zA-Z0-9_-]/g,"").slice(0,40).toUpperCase();
+    if(!room){status("Please enter a valid room code.");return}
+    pin=String(pinValue||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(!pin){status("दूसरे device पर दिख रहा PIN डालें।");return}
+    iAmCreator=!!creator;$("pinBox").style.display="none";$("qr").innerHTML="";
+    if(!auto){userLeft=false;retry=0;wantResume=false;resumeSig="";clearTimeout(retryTimer)}
+    sess={room,pin,creator:!!creator};
+    status("Connecting to signaling server…");
+    const sock=new WebSocket(wsUrl());ws=sock;msgChain=Promise.resolve();
+    sock.onopen=()=>signal({type:"join",room});
+    sock.onmessage=ev=>{
+      if(ws!==sock)return;
+      let m;try{m=JSON.parse(ev.data)}catch{return}
+      msgChain=msgChain.then(()=>handleSignal(m)).catch(e=>status("Connection error: "+e.message));
+    };
+    sock.onerror=()=>status("Could not reach the signaling server. Check the hosted URL and try again.");
+    sock.onclose=()=>{if(ws!==sock)return;if(!ctl)scheduleReconnect("signaling")};
+  }
+  async function handleSignal(m){
+    if(m.type==="joined"){
+      joined=true;initiator=!!m.initiator;room=m.room||room;
+      keyPromise=deriveKey(pin,room);keyPromise.catch(()=>{});
+      showQr();status("Room "+room+" ready. "+(initiator?"Waiting for the other device…":"Joined room; waiting for host…"));cancelBtn.disabled=false;
+    }
+    else if(m.type==="peer-ready"){
+      status("Other device found. Establishing secure connection…");armWatch();
+      if(initiator){for(let i=0;i<P;i++)await createPeer(i,true)}
+    }
+    else if(m.type==="offer"){
+      const i=Number(m.description.idx)||0;armWatch();await createPeer(i,false);
+      const pc=pcs[i].pc;await pc.setRemoteDescription({type:m.description.type,sdp:m.description.sdp});
+      const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+      signal({type:"answer",description:{type:pc.localDescription.type,sdp:pc.localDescription.sdp,idx:i}});
+    }
+    else if(m.type==="answer"){
+      const i=Number(m.description.idx)||0;
+      if(pcs[i])await pcs[i].pc.setRemoteDescription({type:m.description.type,sdp:m.description.sdp});
+    }
+    else if(m.type==="candidate"){
+      const c=Object.assign({},m.candidate);const i=Number(c.idx)||0;delete c.idx;
+      if(pcs[i]){try{await pcs[i].pc.addIceCandidate(c)}catch(e){console.warn(e)}}
+    }
+    else if(m.type==="peer-left"){
+      status("दूसरा device disconnect हुआ — दोबारा जुड़ने की कोशिश…");resetPeers();scheduleReconnect("peer left");
+    }
+    else if(m.type==="error"){status(m.message);if(sess&&!userLeft)scheduleReconnect("server")}
+  }
+  async function createPeer(idx,makeOffer){
+    if(pcs[idx])return;
+    const pc=new RTCPeerConnection({iceServers:ICE});
+    const entry={pc,idx};pcs[idx]=entry;
+    pc.onicecandidate=e=>{if(e.candidate){const c=e.candidate.toJSON();c.idx=idx;signal({type:"candidate",candidate:c})}};
+    pc.onconnectionstatechange=()=>{if(pcs[idx]===entry&&pc.connectionState==="failed"&&idx===0){resetPeers();scheduleReconnect("network")}};
+    if(makeOffer){
+      if(idx===0)openChannel(entry,pc.createDataChannel("ctl"));
+      openChannel(entry,pc.createDataChannel("d"+idx));
+      const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+      signal({type:"offer",description:{type:pc.localDescription.type,sdp:pc.localDescription.sdp,idx}});
+    }else pc.ondatachannel=e=>openChannel(entry,e.channel);
+  }
+  function openChannel(entry,ch){
+    ch.binaryType="arraybuffer";ch.bufferedAmountLowThreshold=BUF_LOW;
+    const w={ch,entry,label:ch.label,authed:false,myNonce:"",peerNonce:"",sentAuth:false,started:false};
+    chans.push(w);
+    const start=()=>{if(w.started)return;w.started=true;w.myNonce=randHex(16);ch.send(JSON.stringify({k:"hello",n:w.myNonce}))};
+    ch.onopen=start;if(ch.readyState==="open")start();
+    ch.onclose=()=>onChanClose(w);
+    ch.onmessage=e=>onChanMsg(w,e.data);
+  }
+  function onChanClose(w){
+    const i=dataChans.indexOf(w);if(i>=0)dataChans.splice(i,1);
+    if(w===ctl){ctl=null;abortSend("Connection closed");abortReceives();transfer("Connection closed.");scheduleReconnect("connection")}
+    setSend();
+  }
+  async function onChanMsg(w,data){
+    if(typeof data!=="string"){if(w.authed&&w.label!=="ctl")onData(data);return}
+    let m;try{m=JSON.parse(data)}catch{return}
+    if(m.k==="hello"&&!w.peerNonce){w.peerNonce=String(m.n).slice(0,64);try{await sendAuth(w)}catch(e){status("Auth error: "+e.message)}return}
+    if(m.k==="auth"&&!w.authed){await verifyAuth(w,m.p);return}
+    if(!w.authed)return;
+    if(w.label==="ctl")onCtl(m);
+  }
+
+  // ---------- control messages ----------
+  function onCtl(m){
+    switch(m.k){
+      case "batch": onBatch(m);break;
+      case "batch-ok": case "batch-no": fire("batch",m);break;
+      case "list": onList(m);break;
+      case "file": onFile(m);break;
+      case "ready": fire("ready:"+m.id,m);break;
+      case "seg": onSegAck(m);break;
+      case "done": fire("done:"+m.id,m);break;
+      case "fail": {const e=new Error(m.msg||"Receiver error");["ready:","done:"].forEach(p=>{const w=waiters.get(p+m.id);if(w)w.reject(e)});if(curSend&&curSend.id===m.id)abortSend(e.message);break}
+    }
+  }
+
+  // ---------- RECEIVER ----------
+  async function uniqueName(dir,name){
+    const dot=name.lastIndexOf(".");const base=dot>0?name.slice(0,dot):name;const ext=dot>0?name.slice(dot):"";
+    let cand=name,i=1;
+    while(true){
+      let exists=true;
+      try{await dir.getFileHandle(cand)}catch(e){if(e.name==="NotFoundError")exists=false;else throw e}
+      if(!exists){try{await dir.getDirectoryHandle(cand);exists=true}catch(e){if(e.name!=="NotFoundError"&&e.name!=="TypeMismatchError")throw e}}
+      if(!exists)return cand;
+      cand=base+" ("+(i++)+")"+ext;
+    }
+  }
+  function onBatch(m){
+    const total=Number(m.total)||0,count=Number(m.count)||0;
+    if(!dirHandle&&total>MEM_LIMIT){ctlSend({k:"batch-no",msg:"Receiver को पहले 'Choose Save Folder' दबाना होगा (desktop Chrome/Edge) — इतनी बड़ी फाइल के लिए।"});return}
+    const prev=(m.preview||[]).map(f=>"• "+String(f.path).slice(0,80)+" ("+fmt(Number(f.size)||0)+")").join("\n")+(count>(m.preview||[]).length?"\n… +"+(count-m.preview.length)+" more":"");
+    const sig=count+"|"+total+"|"+((m.preview&&m.preview[0]&&m.preview[0].path)||"");
+    const ok=(sig===resumeSig)||confirm("Incoming: "+count+" file(s), "+fmt(total)+"\n\n"+prev+"\n\n"+(dirHandle?"Save to folder: "+dirHandle.name:"Browser Downloads में सेव होगी")+"\n\nAccept?");
+    if(!ok){ctlSend({k:"batch-no",msg:"Receiver ने मना कर दिया।"});return}
+    rxBatch={total,done:0,start:performance.now(),sig};resumeSig="";rxRows=[];
+    ctlSend({k:"batch-ok"});
+  }
+  let rxRows=[];
+  function rowSet(idx,text,state){
+    const r=rxRows[idx];if(!r)return;
+    r.textContent=text;
+    r.style.color=state==="done"?"#116b2d":state==="fail"?"#b00020":state==="active"?"#087bd3":"#666";
+  }
+  function onList(m){
+    if(!rxBatch)return;
+    const empty=$("emptyFiles");if(empty)empty.remove();
+    const base=Number(m.from)||0;
+    (m.files||[]).forEach((f,k)=>{
+      const idx=base+k;if(rxRows[idx]||idx>20000)return;
+      const li=document.createElement("li");
+      li.dataset.path=String(f.path).slice(0,200);
+      rxRows[idx]=li;$("fileList").appendChild(li);
+      rowSet(idx,"⏳ "+li.dataset.path+" ("+fmt(Number(f.size)||0)+") — waiting","wait");
+    });
+  }
+  async function onFile(m){
+    try{
+      if(!rxBatch)throw new Error("No accepted batch");
+      const size=Number(m.size);
+      if(!(size>=0)||size>MAX_FILE_SIZE||Number(m.seg)!==SEG)throw new Error("Invalid file info");
+      const parts=String(m.path||m.name).split("/").map(sanitizeName).filter(Boolean);
+      const fname=parts.pop()||"received-file";
+      const rf={id:m.id,idx:Number(m.idx),path:parts.concat(fname).join("/"),fname,size,segs:Math.ceil(size/SEG),done:new Set(),got:new Map(),cnt:new Map(),queue:Promise.resolve(),segW:new Map(),mem:null,dir:null,tmp:null,tmpName:"",finished:false,type:m.type,doneBytes:0};
+      let have=new Set();
+      if(dirHandle){
+        let dir=dirHandle;for(const p of parts)dir=await dir.getDirectoryHandle(p,{create:true});
+        rf.dir=dir;
+        // every 4 MB segment is saved as its own small file, so finished segments survive a crash/reload
+        const key=[rf.path,size,m.mtime].join("|");
+        rf.tmpName=".mahi-tmp-"+hashStr(key)+hashStr(key+"#"+size);
+        rf.tmp=await dir.getDirectoryHandle(rf.tmpName,{create:true});
+        for await(const [name,h] of rf.tmp.entries()){
+          const mm=/^s(\d+)$/.exec(name);
+          if(!mm||h.kind!=="file")continue;
+          const i=Number(mm[1]);if(i>=rf.segs)continue;
+          const f=await h.getFile();
+          if(f.size===segLen(size,i))have.add(i);
+        }
+      }else rf.mem=new Map();
+      rf.done=have;have.forEach(i=>rf.doneBytes+=segLen(size,i));
+      rxBatch.done+=rf.doneBytes;
+      recvFiles.set(m.id,rf);
+      rowSet(rf.idx,"⬇ "+rf.path+" — "+Math.round(rf.doneBytes/Math.max(1,size)*100)+"%"+(have.size?" (पहले का हिस्सा मिला, आगे से जारी)":""),"active");
+      ctlSend({k:"ready",id:m.id,have:encodeRanges(have)});
+      if(have.size===rf.segs)rf.queue=rf.queue.then(()=>finalizeReceive(rf));
+    }catch(err){ctlSend({k:"fail",id:m.id,msg:"Receiver: "+err.message});transfer("Could not prepare file: "+err.message)}
+  }
+  function onData(buf){
+    if(!(buf instanceof ArrayBuffer)||buf.byteLength<=12)return;
+    const dv=new DataView(buf),id=dv.getUint32(0),pos=dv.getFloat64(4);
+    const rf=recvFiles.get(id);if(!rf||rf.finished)return;
+    const si=Math.floor(pos/SEG);if(si<0||si>=rf.segs||rf.done.has(si))return;
+    const cn=Math.round((pos-si*SEG)/PAYLOAD);
+    let g=rf.got.get(si);if(!g){g=new Set();rf.got.set(si,g)}
+    if(g.has(cn))return;g.add(cn);
+    const data=new Uint8Array(buf,12);
+    const need=Math.ceil(segLen(rf.size,si)/PAYLOAD);
+    rf.queue=rf.queue.then(async()=>{
+      if(rf.tmp){
+        let sw=rf.segW.get(si);
+        if(!sw){const fh=await rf.tmp.getFileHandle("s"+si,{create:true});sw=await fh.createWritable();rf.segW.set(si,sw)}
+        await sw.write({type:"write",position:pos-si*SEG,data});
+      }else if(rf.mem)rf.mem.set(pos,data);
+      else return;
+      const c=(rf.cnt.get(si)||0)+1;rf.cnt.set(si,c);
+      if(c>=need&&!rf.done.has(si)){
+        if(rf.tmp){const sw=rf.segW.get(si);rf.segW.delete(si);if(sw)await sw.close()}   // segment is now safely on disk
+        rf.done.add(si);rf.got.delete(si);rf.cnt.delete(si);
+        const L=segLen(rf.size,si);rf.doneBytes+=L;
+        if(rxBatch){rxBatch.done+=L;const secs=Math.max(.1,(performance.now()-rxBatch.start)/1000);transfer("Receiving "+rf.path+" — "+Math.min(100,Math.round(rxBatch.done/Math.max(1,rxBatch.total)*100))+"% ("+(rxBatch.done/1048576/secs).toFixed(1)+" MB/s)")}
+        rowSet(rf.idx,"⬇ "+rf.path+" — "+Math.min(100,Math.round(rf.doneBytes/Math.max(1,rf.size)*100))+"%","active");
+        ctlSend({k:"seg",id:rf.id,i:si});
+        if(rf.done.size===rf.segs)await finalizeReceive(rf);
+      }
+    }).catch(err=>{
+      rf.finished=true;transfer("Disk write failed: "+err.message);
+      rf.segW.forEach(w=>{try{w.abort()}catch{}});rf.segW.clear();rf.mem=null;
+      rowSet(rf.idx,"❌ "+rf.path+" — "+err.message,"fail");
+      ctlSend({k:"fail",id:rf.id,msg:"Disk write failed: "+err.message});
+    });
+  }
+  async function finalizeReceive(rf){
+    rf.finished=true;
+    let savedAs=rf.fname;
+    try{
+      if(rf.tmp){
+        transfer("Saving "+rf.path+" … (हिस्से जोड़कर final file बन रही है)");
+        savedAs=await uniqueName(rf.dir,rf.fname);
+        const fh=await rf.dir.getFileHandle(savedAs,{create:true});
+        const w=await fh.createWritable();
+        try{
+          for(let i=0;i<rf.segs;i++){
+            const sfh=await rf.tmp.getFileHandle("s"+i);
+            const f=await sfh.getFile();
+            await w.write(await f.arrayBuffer());
+          }
+          await w.close();
+        }catch(e){try{await w.abort()}catch{}throw e}
+        try{await rf.dir.removeEntry(rf.tmpName,{recursive:true})}catch{}
+      }else if(rf.mem){
+        const keys=[...rf.mem.keys()].sort((a,b)=>a-b);
+        const blob=new Blob(keys.map(k=>rf.mem.get(k)),{type:rf.type||"application/octet-stream"});
+        rf.mem=null;
+        const url=URL.createObjectURL(blob),a=document.createElement("a");
+        a.href=url;a.download=rf.fname;document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+      }
+      const label="✔ "+rf.path+(savedAs!==rf.fname?" → "+savedAs:"")+" — saved"+(dirHandle?" in "+dirHandle.name:"");
+      if(rxRows[rf.idx])rowSet(rf.idx,label,"done");
+      else{const li=document.createElement("li");li.textContent=label;li.style.color="#116b2d";const empty=$("emptyFiles");if(empty)empty.remove();$("fileList").appendChild(li)}
+      transfer("Received and saved "+rf.path+" ✔");
+      $("saveStatus").textContent=(dirHandle?"Folder: "+dirHandle.name+" · ":"")+"Last saved: "+savedAs;
+      ctlSend({k:"done",id:rf.id});
+    }catch(err){
+      transfer("Saving failed: "+err.message);rowSet(rf.idx,"❌ "+rf.path+" — "+err.message,"fail");
+      ctlSend({k:"fail",id:rf.id,msg:"Saving failed: "+err.message});
+    }
+    recvFiles.delete(rf.id);
+  }
+  async function abortReceives(){
+    const list=[...recvFiles.values()];recvFiles.clear();if(rxBatch&&rxBatch.done<rxBatch.total)resumeSig=rxBatch.sig;rxBatch=null;
+    for(const rf of list){
+      if(rf.finished)continue;rf.finished=true;
+      try{await rf.queue.catch(()=>{})}catch{}
+      for(const w of rf.segW.values()){try{await w.abort()}catch{}}   // unfinished segment is discarded; finished ones stay on disk
+      rf.segW.clear();
+      rowSet(rf.idx,"⚠ "+rf.path+" — रुक गया ("+Math.round(rf.doneBytes/Math.max(1,rf.size)*100)+"% सुरक्षित), दोबारा connect करने पर वहीं से जारी होगा","fail");
+    }
+  }
+
+  // ---------- SENDER ----------
+  function abortSend(reason){
+    if(sendBusy&&/Connection/i.test(reason))wantResume=true;
+    if(curSend){curSend.aborted=true;curSend.abortReason=reason;wake(curSend)}
+    failAll(new Error(reason));
+  }
+  function wake(st){const w=st.wakers;st.wakers=[];w.forEach(f=>f())}
+  async function acquire(st){while(st.inflight>=MAX_INFLIGHT&&!st.aborted)await new Promise(r=>st.wakers.push(r));st.inflight++}
+  function onSegAck(m){
+    const st=curSend;if(!st||st.id!==m.id)return;
+    const i=Number(m.i);
+    if(!st.acked.has(i)){st.acked.add(i);st.inflight=Math.max(0,st.inflight-1)}
+    wake(st);
+  }
+  function waitDrain(ch){
+    return new Promise((res,rej)=>{
+      let timer,done=false;
+      const finish=(fn,a)=>{if(done)return;done=true;clearTimeout(timer);ch.removeEventListener("bufferedamountlow",check);fn(a)};
+      function check(){clearTimeout(timer);if(ch.readyState!=="open")return finish(rej,new Error("Connection closed"));if(ch.bufferedAmount<=BUF_LOW)return finish(res);timer=setTimeout(check,500)}
+      ch.addEventListener("bufferedamountlow",check);check();
+    });
+  }
+  function updateSendUi(st,ov,force){
+    const now=performance.now();if(!force&&now-ov.lastUi<250)return;ov.lastUi=now;
+    const cur=Math.min(st.size-st.haveBytes,st.sent);
+    const pct=Math.min(100,Math.round((ov.doneBytes+st.haveBytes+cur)/Math.max(1,ov.total)*100));
+    const secs=Math.max(.1,(now-ov.t0)/1000);
+    $("progress").value=pct;
+    transfer("Sending "+st.path+" — "+pct+"% ("+(ov.sentSession/1048576/secs).toFixed(1)+" MB/s)");
+  }
+  async function sendSegment(w,st,si,ov){
+    const start=si*SEG,end=Math.min(start+SEG,st.size);
+    const buf=await st.file.slice(start,end).arrayBuffer();
+    for(let o=0;o<buf.byteLength;o+=PAYLOAD){
+      if(st.aborted)throw new Error(st.abortReason||"Aborted");
+      if(w.ch.readyState!=="open")throw new Error("Lane closed");
+      if(w.ch.bufferedAmount>BUF_HIGH)await waitDrain(w.ch);
+      const len=Math.min(PAYLOAD,buf.byteLength-o);
+      const msg=new Uint8Array(12+len),dv=new DataView(msg.buffer);
+      dv.setUint32(0,st.id);dv.setFloat64(4,start+o);msg.set(new Uint8Array(buf,o,len),12);
+      w.ch.send(msg);
+      st.sent+=len;ov.sentSession+=len;
+      updateSendUi(st,ov,false);
+    }
+  }
+  async function runWorkers(st,ov){
+    const lanes=dataChans.filter(w=>w.ch.readyState==="open");
+    if(!lanes.length)throw new Error("No data lane available");
+    let lastErr=null;
+    await Promise.all(lanes.map(async w=>{
+      while(!st.aborted){
+        await acquire(st);
+        if(st.aborted){st.inflight=Math.max(0,st.inflight-1);break}
+        const si=st.pending.shift();
+        if(si===undefined){st.inflight=Math.max(0,st.inflight-1);wake(st);break}
+        try{await sendSegment(w,st,si,ov)}
+        catch(e){lastErr=e;st.pending.unshift(si);st.inflight=Math.max(0,st.inflight-1);wake(st);break}
+      }
+    }));
+    if(st.aborted)throw new Error(st.abortReason||"Aborted");
+    if(st.pending.length)throw lastErr||new Error("All lanes closed");
+  }
+  async function waitAcked(st,ms){
+    const end=Date.now()+ms;
+    while(st.acked.size<st.segs&&!st.aborted&&Date.now()<end)await Promise.race([new Promise(r=>st.wakers.push(r)),sleep(1000)]);
+    if(st.aborted)throw new Error(st.abortReason||"Aborted");
+  }
+  async function sendOne(it,ov,idx){
+    const file=it.file,id=++fileSeq,size=file.size,segs=Math.ceil(size/SEG);
+    const pReady=expect("ready:"+id,60000);
+    ctlSend({k:"file",id,idx,name:file.name,path:it.path,size,type:file.type||"application/octet-stream",mtime:file.lastModified,seg:SEG});
+    const r=await pReady;
+    const have=decodeRanges(r.have,segs);let haveBytes=0;have.forEach(i=>haveBytes+=segLen(size,i));
+    const st={id,file,path:it.path,size,segs,acked:have,pending:[],inflight:0,wakers:[],aborted:false,abortReason:"",sent:0,haveBytes};
+    curSend=st;
+    for(let round=0;round<4&&st.acked.size<segs;round++){
+      st.pending=[];for(let i=0;i<segs;i++)if(!st.acked.has(i))st.pending.push(i);
+      st.inflight=0;
+      await runWorkers(st,ov);
+      await waitAcked(st,60000);
+    }
+    if(st.acked.size<segs)throw new Error("Receiver stopped confirming data");
+    updateSendUi(st,ov,true);
+    await expect("done:"+id,1800000);
+    ov.doneBytes+=size;curSend=null;
+  }
+  async function runSend(items){
+    const total=items.reduce((s,x)=>s+x.file.size,0);
+    for(let i=0;i<50&&dataChans.length<P;i++){if(dataChans.length&&i>=30)break;await sleep(100)}
+    if(!dataChans.length)throw new Error("Data lanes are not ready yet");
+    const pb=expect("batch",300000);
+    ctlSend({k:"batch",count:items.length,total,preview:items.slice(0,6).map(x=>({path:x.path,size:x.file.size}))});
+    const resp=await pb;
+    if(resp.k!=="batch-ok")throw new Error(resp.msg||"Receiver declined");
+    for(let i=0;i<items.length;i+=100)ctlSend({k:"list",from:i,files:items.slice(i,i+100).map(x=>({path:String(x.path).slice(0,200),size:x.file.size}))});
+    const ov={total,doneBytes:0,sentSession:0,t0:performance.now(),lastUi:0};
+    for(let k=0;k<items.length;k++)await sendOne(items[k],ov,k);
+    const secs=(performance.now()-ov.t0)/1000;
+    $("progress").value=100;
+    transfer("✅ Done! "+items.length+" file(s) sent in "+secs.toFixed(1)+" s (avg "+(ov.sentSession/1048576/Math.max(.1,secs)).toFixed(1)+" MB/s).");
+  }
+  async function startSend(auto){
+    if(sendBusy||!ctl)return;
+    const items=getItems();if(!items.length)return;
+    if(items.some(x=>x.file.size>MAX_FILE_SIZE)){alert("Maximum file size is 10 GB per file.");return}
+    const total=items.reduce((s,x)=>s+x.file.size,0);
+    if(!auto&&!confirm("Send "+items.length+" file(s), "+fmt(total)+"? Keep both devices awake until complete."))return;
+    wantResume=false;
+    sendBusy=true;setSend();holdAwake();$("progress").hidden=false;$("progress").value=0;
+    transfer(auto?"🔄 दोबारा जुड़ गए — transfer जारी हो रहा है…":"Waiting for receiver to accept…");
+    try{await runSend(items)}
+    catch(e){transfer("Transfer interrupted: "+e.message+(wantResume?" — अपने-आप दोबारा जुड़कर जारी होगा।":" — वही files फिर Send करें, transfer वहीं से आगे बढ़ेगा।"))}
+    curSend=null;sendBusy=false;setSend();
+  }
+  sendBtn.onclick=()=>startSend(false);
+  window.addEventListener("beforeunload",e=>{if(sendBusy||recvFiles.size){e.preventDefault();e.returnValue=""}});
+
+  // ---------- keep screen awake while a transfer is running ----------
+  let wakeLock=null;
+  const transferActive=()=>sendBusy||recvFiles.size>0||!!(rxBatch&&rxBatch.done<rxBatch.total);
+  async function holdAwake(){
+    try{
+      if(!("wakeLock" in navigator)||wakeLock||document.visibilityState!=="visible")return;
+      wakeLock=await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release",()=>{wakeLock=null});
+    }catch{wakeLock=null}
+  }
+  function releaseAwake(){try{if(wakeLock)wakeLock.release()}catch{}wakeLock=null}
+  function syncAwake(){transferActive()?holdAwake():releaseAwake()}
+  setInterval(syncAwake,2000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncAwake()});
+  if(!("wakeLock" in navigator))console.info("Screen Wake Lock not supported in this browser");
+
+  // ---------- auto-reconnect, route info, drag & drop ----------
+  function armWatch(){
+    clearTimeout(connWatch);
+    connWatch=setTimeout(()=>{if(!ctl&&sess&&!userLeft){resetPeers();scheduleReconnect("timeout")}},30000);
+  }
+  function scheduleReconnect(why){
+    if(userLeft||!sess)return;
+    if(retry>=40){status("दोबारा जुड़ नहीं पाए — Create/Join room दबाकर फिर कोशिश करें।");return}
+    clearTimeout(retryTimer);
+    const delay=Math.min(12000,800*Math.pow(2,Math.min(retry,4)));retry++;
+    status("🔄 Connection टूटा ("+why+") — "+Math.ceil(delay/1000)+" s में अपने-आप दोबारा जुड़ेंगे…");
+    retryTimer=setTimeout(()=>{if(userLeft||!sess||ctl)return;connectToRoom(sess.room,sess.pin,sess.creator,true)},delay);
+  }
+  async function showRoute(){
+    try{
+      if(!pcs[0]||!ctl)return;
+      const st=await pcs[0].pc.getStats();
+      let sel=null;
+      st.forEach(r=>{if(r.type==="transport"&&r.selectedCandidatePairId)sel=st.get(r.selectedCandidatePairId)});
+      if(!sel)st.forEach(r=>{if(r.type==="candidate-pair"&&r.nominated&&r.state==="succeeded")sel=r});
+      if(!sel)return;
+      const l=st.get(sel.localCandidateId),r=st.get(sel.remoteCandidateId);
+      const t=[l&&l.candidateType,r&&r.candidateType];
+      routeText=t.includes("relay")?" · Route: Relay (धीमा हो सकता है)":t.every(x=>x==="host")?" · Route: Local network (सबसे तेज़)":" · Route: Direct internet";
+      if(ctl)status("✅ Connected & verified · "+dataChans.length+"/"+P+" fast lanes ready"+routeText);
+    }catch{}
+  }
+  async function walkEntry(entry,path,out){
+    if(entry.isFile){await new Promise(res=>entry.file(f=>{out.push({file:f,path:path+f.name});res()},()=>res()))}
+    else if(entry.isDirectory){
+      const rd=entry.createReader();let batch;
+      do{batch=await new Promise(res=>rd.readEntries(res,()=>res([])));for(const e of batch)await walkEntry(e,path+entry.name+"/",out)}while(batch.length);
+    }
+  }
+  document.addEventListener("dragover",e=>{e.preventDefault()});
+  document.addEventListener("drop",async e=>{
+    e.preventDefault();
+    const entries=[...((e.dataTransfer&&e.dataTransfer.items)||[])].map(it=>it.webkitGetAsEntry&&it.webkitGetAsEntry()).filter(Boolean);
+    const plain=[...((e.dataTransfer&&e.dataTransfer.files)||[])];
+    const out=[];
+    if(entries.length){for(const en of entries)await walkEntry(en,"",out)}
+    else plain.forEach(f=>out.push({file:f,path:f.name}));
+    if(!out.length)return;
+    dropped=dropped.concat(out);$("sendDetails").classList.add("open");updateSel();
+  });
+  $("clearBtn").onclick=()=>{dropped=[];$("fileInput").value="";$("folderInput").value="";updateSel()};
+
+  // ---------- UI wiring ----------
+  const toggleDetails=id=>$(id).classList.toggle("open");
+  $("sendCard").onclick=()=>{toggleDetails("sendDetails");$("connectDetails").classList.add("open")};
+  $("receiveCard").onclick=()=>{toggleDetails("receiveDetails");$("connectDetails").classList.add("open")};
+  document.querySelector(".scan-section").addEventListener("click",e=>{if(e.target.id!=="scanBtn")$("connectDetails").classList.add("open")});
+  $("fileInput").onchange=updateSel;$("folderInput").onchange=updateSel;
+  $("chooseSaveBtn").onclick=async()=>{
+    if(!window.showDirectoryPicker){
+      $("saveStatus").textContent="Folder saving के लिए desktop Chrome/Edge (HTTPS) चाहिए। इस browser में 1 GB तक की files original नाम से download होंगी।";return;
+    }
+    try{
+      dirHandle=await window.showDirectoryPicker({mode:"readwrite"});
+      $("saveStatus").textContent="Save folder: "+dirHandle.name+" — सारी files यहीं original नाम और extension के साथ आएंगी।";
+    }catch(e){if(e.name!=="AbortError")$("saveStatus").textContent="Could not select folder: "+e.message}
+  };
+  function parseScanned(text){
+    let code=text,p="";
+    try{const u=new URL(text);code=u.searchParams.get("room")||text;const h=new URLSearchParams(u.hash.replace(/^#/,""));p=h.get("pin")||""}catch{}
+    return {code:String(code).trim(),pin:p};
+  }
+  scanBtn.onclick=async()=>{
+    $("connectDetails").classList.add("open");const box=$("qr-reader");
+    if(scanning&&qrScanner){try{await qrScanner.stop();await qrScanner.clear()}catch(e){}qrScanner=null;scanning=false;box.style.display="none";scanBtn.textContent="Scan QR Code";return}
+    if(!window.Html5Qrcode){status("QR scanner could not load. Enter the room code manually.");return}
+    box.style.display="block";scanBtn.disabled=true;status("Allow camera access to scan the room QR code.");
+    try{qrScanner=new Html5Qrcode("qr-reader");await qrScanner.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},async decodedText=>{
+      const s=parseScanned(decodedText);
+      try{await qrScanner.stop();await qrScanner.clear()}catch(e){}
+      qrScanner=null;scanning=false;box.style.display="none";scanBtn.disabled=false;scanBtn.textContent="Scan QR Code";
+      roomInput.value=s.code;if(s.pin)pinInput.value=s.pin;connectToRoom(s.code,s.pin||pinInput.value,false);
+    },()=>{});scanning=true;scanBtn.textContent="Stop Scanner"}
+    catch(e){status("Could not start camera. Allow camera permission or enter the room code manually.");if(qrScanner){try{await qrScanner.clear()}catch(err){}}qrScanner=null;scanning=false;box.style.display="none"}
+    finally{scanBtn.disabled=false}
+  };
+  createBtn.onclick=()=>connectToRoom(randStr(10),randStr(8),true);
+  joinBtn.onclick=()=>connectToRoom(roomInput.value,pinInput.value,false);
+  cancelBtn.onclick=()=>{userLeft=true;signal({type:"hangup"});cleanup();wantResume=false;resumeSig="";sess=null;clearTimeout(retryTimer);clearTimeout(connWatch);routeText="";status("Disconnected.");transfer("Ready when you are.");$("qr").innerHTML="";$("pinBox").style.display="none"};
+
+  const qs=new URLSearchParams(location.search).get("room");
+  if(qs){
+    const hp=new URLSearchParams(location.hash.replace(/^#/,"")).get("pin")||"";
+    $("connectDetails").classList.add("open");roomInput.value=qs;pinInput.value=hp;
+    try{history.replaceState(null,"",location.pathname+location.search)}catch{}
+    if(hp)connectToRoom(qs,hp,false);else status("Room मिल गया — दूसरे device का PIN डालकर Join room दबाएं।");
+  }
+})();
+</script>
+</body>
+</html>
