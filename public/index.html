@@ -23,6 +23,25 @@ input[type=text]{border:1px solid #cbd3e2;border-radius:8px;padding:10px;min-wid
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}.pick label{font-size:12px;color:#555;display:block;margin-bottom:4px}
 @media(max-width:520px){.page{margin:8px 0;padding:6px;border-radius:12px;border-left:0;border-right:0}.actions{gap:7px}.action-card{min-height:108px;padding:12px 5px}.action-title{font-size:14px}.action-desc{font-size:13px}.brand{font-size:20px}.pick{grid-template-columns:1fr}}
 footer a{color:#174b7a;text-decoration:none}footer a:hover{text-decoration:underline}
+
+/* ---------- informational content for visitors ---------- */
+.info-section{margin:18px 2px 0;padding:20px 16px;border:1px solid #e2e8f0;border-radius:13px;background:#fff}
+.info-section h2{margin:0 0 10px;color:#06365f;font-size:19px;line-height:1.3}
+.info-section h3{margin:14px 0 5px;color:#174b7a;font-size:15px}
+.info-section p{margin:7px 0;color:#4b5563;font-size:14px;line-height:1.7}
+.info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.info-card{padding:12px;border:1px solid #e5eaf0;border-radius:10px;background:#f8fbff}
+.info-card b{display:block;color:#06365f;font-size:14px;margin-bottom:5px}
+.info-card span{display:block;color:#596579;font-size:13px;line-height:1.55}
+.info-list{padding-left:20px;margin:8px 0;color:#4b5563;font-size:14px;line-height:1.7}
+.faq-item{padding:11px 0;border-top:1px solid #edf0f4}
+.faq-item:first-of-type{border-top:0}
+.faq-item strong{display:block;color:#174b7a;font-size:14px;margin-bottom:4px}
+.info-links{display:flex;flex-wrap:wrap;gap:9px 15px;margin-top:12px}
+.info-links a{color:#087bd3;text-decoration:none;font-size:14px;font-weight:700}
+.info-links a:hover{text-decoration:underline}
+@media(max-width:520px){.info-section{padding:17px 13px}.info-grid{grid-template-columns:1fr}.info-section h2{font-size:18px}}
+
 </style>
 </head>
 <body>
@@ -54,6 +73,77 @@ footer a{color:#174b7a;text-decoration:none}footer a:hover{text-decoration:under
 <ul id="fileList"><li class="sub" id="emptyFiles">No files received yet.</li></ul>
 </section>
 <div class="privacy"><b>Security:</b> Files WebRTC के encrypted (DTLS) channel से जाती हैं। इसके ऊपर PIN-based verification है: PIN गलत हो या बीच में कोई तीसरा आ जाए तो connection reject होता है। Receiver को हर transfer से पहले Accept/Reject का सवाल आता है। Signaling server सिर्फ devices को जोड़ता है; कुछ networks पर TURN relay चाहिए हो सकता है।</div>
+
+<section class="info-section" aria-labelledby="about-share-title">
+  <h2 id="about-share-title">What is MAHI SHARE?</h2>
+  <p>MAHI SHARE is a browser-based tool designed to help you transfer files and folders between two connected devices, such as a phone and a computer. You can create a room on one device and connect the other device using a QR code, room code, and PIN.</p>
+  <p>No account is required for the basic transfer flow. Keep both devices open and connected while a transfer is in progress.</p>
+</section>
+
+<section class="info-section" aria-labelledby="how-share-title">
+  <h2 id="how-share-title">How to transfer files</h2>
+  <div class="info-grid">
+    <div class="info-card"><b>1. Create a room</b><span>On the first device, choose Send Files or Receive Files, open the connection panel, and select Create new room. A room code, PIN, and QR code will appear.</span></div>
+    <div class="info-card"><b>2. Connect the other device</b><span>On the second device, scan the QR code or enter the room code and PIN, then join the room. Check that the PIN matches.</span></div>
+    <div class="info-card"><b>3. Accept and transfer</b><span>Choose the files or folder to send. The receiving device must review and accept the incoming transfer before the files are sent.</span></div>
+  </div>
+  <div class="info-links">
+    <a href="/how-to-use.html">Read the complete How to Use guide →</a>
+  </div>
+</section>
+
+<section class="info-section" aria-labelledby="device-guide-title">
+  <h2 id="device-guide-title">Phone-to-PC and PC-to-phone sharing</h2>
+  <h3>Send files from phone to computer</h3>
+  <p>Open MAHI SHARE on both devices. Create a room on one device and scan its QR code from the other. Select files on the sending device and accept the request on the receiving device.</p>
+  <h3>Send files from computer to phone</h3>
+  <p>Use the same room-and-PIN process. Select files or a folder on the computer, then review the incoming transfer on the phone. Browser download behavior and file-size limits can vary by device and browser.</p>
+</section>
+
+<section class="info-section" aria-labelledby="compatibility-title">
+  <h2 id="compatibility-title">Browser support and important limits</h2>
+  <ul class="info-list">
+    <li>Use a modern browser with WebRTC support. Keep both devices on the MAHI SHARE page during connection and transfer.</li>
+    <li>QR scanning requires camera permission and a secure HTTPS page. If scanning is unavailable, enter the room code and PIN manually.</li>
+    <li>The sender interface allows files up to 10 GB each, but successful transfer also depends on the receiving browser, available storage, memory, device capability, and network stability.</li>
+    <li>For large files, the current page recommends choosing a save folder on desktop Chrome or Edge. Other browser/device paths have a lower in-memory limit (up to 1 GB in this implementation).</li>
+    <li>Some networks may not establish a direct WebRTC connection and may require a TURN relay. Transfer speed and availability can vary.</li>
+  </ul>
+</section>
+
+<section class="info-section" aria-labelledby="faq-title">
+  <h2 id="faq-title">Frequently Asked Questions</h2>
+  <div class="faq-item">
+    <strong>Do I need to install an app?</strong>
+    <p>No installation is required for the basic browser-based transfer flow. Open the website in a compatible browser on both devices.</p>
+  </div>
+  <div class="faq-item">
+    <strong>How do the two devices connect?</strong>
+    <p>One device creates a room. The other joins by scanning the QR code or entering the room code and PIN.</p>
+  </div>
+  <div class="faq-item">
+    <strong>Are files sent before the receiver accepts?</strong>
+    <p>The receiving device is asked to accept or reject an incoming batch before the sender proceeds with the transfer.</p>
+  </div>
+  <div class="faq-item">
+    <strong>Why can a transfer be slow or stop?</strong>
+    <p>Network restrictions, browser limits, device performance, storage availability, and the need for a relay connection can affect transfer speed or reliability. Keep both devices awake and connected.</p>
+  </div>
+  <div class="faq-item">
+    <strong>Where are received files saved?</strong>
+    <p>On supported desktop browsers, you can choose a save folder. Otherwise, the browser may save files through its normal download process. The exact behavior depends on the browser and device.</p>
+  </div>
+  <div class="faq-item">
+    <strong>Does MAHI SHARE store my files?</strong>
+    <p>The service is designed for browser-to-browser WebRTC transfers, and the signaling server is used to help devices connect rather than to store transferred files. Some network setups may use a TURN relay to carry traffic. See our Privacy Policy for details.</p>
+  </div>
+  <div class="info-links">
+    <a href="/privacy-policy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms &amp; Conditions</a>
+    <a href="/contact.html">Contact Us</a>
+  </div>
+</section>
+
 </main><footer>
   <div style="font-weight:700;color:#06365f;margin-bottom:8px">MAHI SHARE</div>
   <nav aria-label="Footer navigation" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px;margin-bottom:8px">
